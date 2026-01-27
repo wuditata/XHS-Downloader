@@ -110,7 +110,38 @@
                                     <div class="form-group">
                                         <label class="form-label" for="name_format">命名格式</label>
                                         <input type="text" class="form-input" id="name_format" name="name_format" value="{{ config.name_format }}">
+                                        <div class="tag-selector" style="margin-top: 12px;">
+                                            <span class="form-label" style="font-size: 14px;">可用标签：</span>
+                                            <div class="tags" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+                                                <span class="tag tag-primary" onclick="addTag('发布时间')">发布时间</span>
+                                                <span class="tag tag-primary" onclick="addTag('作者昵称')">作者昵称</span>
+                                                <span class="tag tag-primary" onclick="addTag('作品标题')">作品标题</span>
+                                                <span class="tag tag-primary" onclick="addTag('作品描述')">作品描述</span>
+                                                <span class="tag tag-primary" onclick="addTag('作品类型')">作品类型</span>
+                                                <span class="tag tag-primary" onclick="addTag('作者ID')">作者ID</span>
+                                                <span class="tag tag-primary" onclick="addTag('作品ID')">作品ID</span>
+                                                <span class="tag tag-primary" onclick="addTag('收藏数量')">收藏数量</span>
+                                                <span class="tag tag-primary" onclick="addTag('评论数量')">评论数量</span>
+                                                <span class="tag tag-primary" onclick="addTag('分享数量')">分享数量</span>
+                                                <span class="tag tag-primary" onclick="addTag('点赞数量')">点赞数量</span>
+                                                <span class="tag tag-primary" onclick="addTag('作品标签')">作品标签</span>
+                                                <span class="tag tag-primary" onclick="addTag('最后更新时间')">最后更新时间</span>
+                                                <span class="tag tag-primary" onclick="addTag('时间戳')">时间戳</span>
+                                            </div>
+                                        </div>
                                     </div>
+                                    <script>
+                                        function addTag(tag) {
+                                            const input = document.getElementById('name_format');
+                                            const currentValue = input.value;
+                                            if (currentValue) {
+                                                input.value = currentValue + ' ' + tag;
+                                            } else {
+                                                input.value = tag;
+                                            }
+                                            input.focus();
+                                        }
+                                    </script>
                                 </div>
                                 
                                 <div class="settings-section">
