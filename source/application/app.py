@@ -274,16 +274,20 @@ class XHS:
             skip=0,
         )
         self.logging(_("共 {0} 个小红书作品待处理...").format(statistics.all))
-        result = [
-            await self.__deal_extract(
-                i,
-                download,
-                index,
-                data,
-                count=statistics,
-            )
-            for i in urls
-        ]
+        result = []
+        for i in urls:
+            try:
+                item = await self.__deal_extract(
+                    i,
+                    download,
+                    index,
+                    data,
+                    count=statistics,
+                )
+                result.append(item)
+            except (KeyboardInterrupt, CancelledError):
+                self.logging(_("用户中断了批量执行"), WARNING)
+                break
         self.show_statistics(
             statistics,
         )
@@ -329,16 +333,20 @@ class XHS:
                 fail=0,
                 skip=0,
             )
-            [
-                await self.__deal_extract(
-                    u,
-                    download,
-                    index,
-                    data,
-                    count=statistics,
-                )
-                for u in url
-            ]
+            result = []
+            for u in url:
+                try:
+                    item = await self.__deal_extract(
+                        u,
+                        download,
+                        index,
+                        data,
+                        count=statistics,
+                    )
+                    result.append(item)
+                except (KeyboardInterrupt, CancelledError):
+                    self.logging(_("用户中断了批量执行"), WARNING)
+                    break
             self.show_statistics(
                 statistics,
             )

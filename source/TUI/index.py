@@ -42,6 +42,7 @@ class Index(Screen):
         self.xhs = app
         self.url = None
         self.tip = None
+        self.deal_task = None
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -64,6 +65,7 @@ class Index(Screen):
                 Button(_("下载无水印作品文件"), id="deal"),
                 Button(_("读取剪贴板"), id="paste"),
                 Button(_("清空输入框"), id="reset"),
+                Button(_("中断下载"), id="cancel"),
             ),
         )
         yield RichLog(
@@ -87,7 +89,7 @@ class Index(Screen):
     @on(Button.Pressed, "#deal")
     async def deal_button(self):
         if self.url.value:
-            self.deal()
+            self.deal_task = self.deal()
         else:
             self.tip.write(
                 Text(_("未输入任何小红书作品链接"), style=WARNING),
@@ -106,28 +108,55 @@ class Index(Screen):
     def paste_button(self):
         self.query_one(Input).value = paste()
 
+    @on(Button.Pressed, "#cancel")
+    async def cancel_button(self):
+        if self.deal_task:
+            self.deal_task.cancel()
+            self.tip.write(
+                Text(_("正在中断批量下载..."), style=WARNING),
+                scroll_end=True,
+            )
+        else:
+            self.tip.write(
+                Text(_("没有正在执行的下载任务"), style=WARNING),
+                scroll_end=True,
+            )
+            self.tip.write(
+                Text(">" * 50, style=GENERAL),
+                scroll_end=True,
+            )
+
     @work(exclusive=True)
     async def deal(self):
         await self.app.push_screen("loading")
-        if any(
-            await self.xhs.extract(
-                self.url.value,
-                True,
-                data=False,
-            )
-        ):
-            self.url.value = ""
-        else:
+        try:
+            if any(
+                await self.xhs.extract(
+                    self.url.value,
+                    True,
+                    data=False,
+                )
+            ):
+                self.url.value = ""
+            else:
+                self.tip.write(
+                    Text(_("下载小红书作品文件失败"), style=ERROR),
+                    animate=True,
+                    scroll_end=True,
+                )
+        except (KeyboardInterrupt, CancelledError):
             self.tip.write(
-                Text(_("下载小红书作品文件失败"), style=ERROR),
+                Text(_("用户中断了批量下载"), style=WARNING),
                 animate=True,
                 scroll_end=True,
             )
-        self.tip.write(
-            Text(">" * 50, style=GENERAL),
-            scroll_end=True,
-        )
-        await self.app.action_back()
+        finally:
+            self.deal_task = None
+            self.tip.write(
+                Text(">" * 50, style=GENERAL),
+                scroll_end=True,
+            )
+            await self.app.action_back()
 
     async def action_quit(self) -> None:
         await self.app.action_quit()

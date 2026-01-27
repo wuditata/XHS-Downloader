@@ -108,8 +108,15 @@ class Download:
             )
             for url, name, format_ in tasks
         ]
-        tasks = await gather(*tasks)
-        return path, tasks  # 未解之谜
+        results = []
+        for task in tasks:
+            try:
+                result = await task
+                results.append(result)
+            except (KeyboardInterrupt, CancelledError):
+                logging(self.print, _("用户中断了下载任务"), ERROR)
+                break
+        return path, results  # 未解之谜
 
     def __generate_path(self, nickname: str, filename: str):
         if self.author_archive:
@@ -247,6 +254,10 @@ class Download:
                 # self.__create_progress(bar, None)
                 logging(self.print, _("文件 {0} 下载成功").format(real.name))
                 return True
+            except (KeyboardInterrupt, CancelledError):
+                self.manager.delete(temp)
+                logging(self.print, _("用户中断了文件下载"), ERROR)
+                raise
             except HTTPError as error:
                 # self.__create_progress(bar, None)
                 logging(

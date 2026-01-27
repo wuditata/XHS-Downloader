@@ -1,12 +1,19 @@
 from asyncio import run
 from asyncio.exceptions import CancelledError
 from contextlib import suppress
-from sys import argv
+from signal import signal, SIGTERM
+from sys import argv, exit
 
 from source import Settings
 from source import XHS
 from source import XHSDownloader
 from source import cli
+
+# 捕获SIGTERM信号，将其转换为KeyboardInterrupt异常
+def signal_handler(signum, frame):
+    raise KeyboardInterrupt
+
+signal(SIGTERM, signal_handler)
 
 
 async def app():
