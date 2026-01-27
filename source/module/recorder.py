@@ -139,6 +139,17 @@ class DataRecorder(IDRecorder):
     async def all(self):
         pass
 
+    async def select_all(self):
+        if self.switch:
+            await self.cursor.execute("SELECT * FROM explore_data")
+            rows = await self.cursor.fetchall()
+            # 将结果转换为字典列表
+            result = []
+            columns = [i[0] for i in self.DATA_TABLE]
+            for row in rows:
+                result.append(dict(zip(columns, row)))
+            return result
+
     def __generate_values(self, data: dict) -> tuple:
         return tuple(data[i] for i, _ in self.DATA_TABLE)
 

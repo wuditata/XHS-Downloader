@@ -7,7 +7,7 @@ authors = [
 ]
 readme = "README.md"
 license = "GPL-3.0"
-requires-python = ">=3.12,<3.13"
+requires-python = ">=3.11,<3.13"
 dependencies = [
     "aiofiles>=25.1.0",
     "aiosqlite>=0.21.0",
@@ -24,6 +24,9 @@ dependencies = [
     "uvicorn>=0.38.0",
     "websockets>=15.0.1",
 ]
+
+[tool.setuptools.packages.find]
+where = ["source"]
 
 [project.urls]
 Repository = "https://github.com/JoeanAmier/XHS-Downloader"

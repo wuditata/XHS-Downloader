@@ -8,6 +8,7 @@ from source import Settings
 from source import XHS
 from source import XHSDownloader
 from source import cli
+from source.Web import WebServer
 
 # 捕获SIGTERM信号，将其转换为KeyboardInterrupt异常
 def signal_handler(signum, frame):
@@ -49,6 +50,14 @@ async def mcp_server(
         )
 
 
+async def web_server(
+    host="0.0.0.0",
+    port=5557,
+):
+    server = WebServer()
+    await server.run(host, port)
+
+
 if __name__ == "__main__":
     with suppress(
         KeyboardInterrupt,
@@ -62,5 +71,7 @@ if __name__ == "__main__":
         elif argv[1].upper() == "MCP":
             run(mcp_server())
             # run(mcp_server("stdio"))
+        elif argv[1].upper() == "WEB":
+            run(web_server())
         else:
             cli()

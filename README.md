@@ -137,7 +137,19 @@
 <hr>
 <img src="static/screenshot/命令行模式截图CN2.png" alt="">
 <h1>🖥 服务器模式</h1>
-<p>服务器模式包含 API 模式和 MCP 模式！</p>
+<p>服务器模式包含 API 模式、MCP 模式和 Web 模式！</p>
+
+<h2>Web 模式</h2>
+<p><b>启动：</b>运行命令：<code>python .\main.py web</code></p>
+<p><b>关闭：</b>按下 <code>Ctrl</code> + <code>C</code> 关闭服务器</p>
+<p>启动服务后，在浏览器中访问 <code>http://localhost:5557</code> 即可打开 Web 界面。</p>
+<p><b>功能说明：</b></p>
+<ul>
+<li><b>首页</b>：粘贴多个小红书作品链接，开始下载任务</li>
+<li><b>历史记录</b>：查看过往的下载任务和数据预览，按用户分组显示</li>
+<li><b>系统配置</b>：提供友好的配置界面，可修改各种参数</li>
+<li><b>图片预览</b>：实现在线相册功能，查看下载后的图片</li>
+</ul>
 <h2>API 模式</h2>
 <p><b>启动：</b>运行命令：<code>python .\main.py api</code></p>
 <p><b>关闭：</b>按下 <code>Ctrl</code> + <code>C</code> 关闭服务器</p>
