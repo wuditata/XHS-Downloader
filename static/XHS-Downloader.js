@@ -2,12 +2,12 @@
 // @name           XHS-Downloader
 // @namespace      xhs_downloader
 // @homepage       https://github.com/JoeanAmier/XHS-Downloader
-// @version        2.3.7
+// @version        2.3.8
 // @tag            小红书
 // @tag            RedNote
 // @tag            XiaoHongShu
-// @description    提取小红书作品/用户链接，下载小红书图文/视频作品文件；支持一键推送到 Happytime
-// @description:en Extract RedNote works/user links, Download images/videos files; push to Happytime
+// @description    提取小红书作品/用户链接，下载小红书图文/视频作品文件；支持一键推送帖子数据到 Happytime webhook（不落本地）
+// @description:en Extract RedNote works/user links; push note data to Happytime webhook without local download
 // @author         JoeanAmier
 // @match          http*://www.xiaohongshu.com/explore*
 // @match          http*://www.xiaohongshu.com/discovery/item/*
@@ -29,6 +29,7 @@
 // @grant          GM_xmlhttpRequest
 // @connect        127.0.0.1
 // @connect        localhost
+// @connect        *
 // @license        GNU General Public License v3.0
 // @run-at         document-end
 // @updateURL      https://raw.githubusercontent.com/wuditata/XHS-Downloader/master/static/XHS-Downloader.js
@@ -130,10 +131,10 @@ KS-Downloader（快手、KuaiShou）：https://github.com/JoeanAmier/KS-Download
             scriptServerURLDesc: '用户脚本连接的 WebSocket 服务器',
             scriptServerSwitchLabel: '连接服务器',
             scriptServerSwitchDesc: '启用后，可以把作品下载任务推送至服务器',
-            happytimeURLLabel: 'Happytime 接口地址',
-            happytimeURLDesc: '接收作品链接的 Happytime HTTP 接口，例如 http://127.0.0.1:3000/api/xhs/import',
+            happytimeURLLabel: 'Happytime Webhook 地址',
+            happytimeURLDesc: '接收帖子 JSON 的 HTTP 接口，只推送数据不下载到本地',
             happytimeSwitchLabel: '启用 Happytime 推送',
-            happytimeSwitchDesc: '启用后，可在作品页一键把链接推送到 Happytime',
+            happytimeSwitchDesc: '启用后，作品页可一键把帖子元数据与媒体链接推送到 webhook',
             imageDownloadFormatLabel: '图片下载格式',
             imageDownloadFormatDesc: '图文作品文件下载格式',
             saveSettingsButton: '保存设置',
@@ -153,10 +154,12 @@ KS-Downloader（快手、KuaiShou）：https://github.com/JoeanAmier/KS-Download
             pushDownloadTaskText: '推送下载任务',
             pushDownloadTaskDescription: '向服务器发送下载请求',
             pushHappytimeText: '推送到 Happytime',
-            pushHappytimeDescription: '把当前作品链接发送给 Happytime',
-            pushHappytimeSuccess: '已推送到 Happytime',
-            pushHappytimeError: '推送 Happytime 失败，请检查接口地址或服务状态',
+            pushHappytimeDescription: '提取帖子数据与媒体链接，POST 到 webhook（不保存本地）',
+            pushHappytimeSuccess: '已推送帖子数据到 Happytime',
+            pushHappytimeError: '推送 Happytime 失败，请检查 webhook 地址或服务状态',
             pushHappytimeDisabled: '请先在脚本设置中启用 Happytime 推送',
+            pushHappytimeNoNote: '未提取到帖子数据，请打开作品详情页后再试',
+            pushHappytimeNoMedia: '未提取到媒体下载链接',
             extractPublishedLinksText: '提取发布作品链接',
             extractPublishedLinksDescription: '提取账号发布作品链接至剪贴板',
             extractLikedLinksText: '提取点赞作品链接',
@@ -268,10 +271,10 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
             scriptServerURLDesc: 'The WebSocket server address the script connects to',
             scriptServerSwitchLabel: 'Connect to Server',
             scriptServerSwitchDesc: 'When enabled, download tasks can be pushed to the server',
-            happytimeURLLabel: 'Happytime Endpoint',
-            happytimeURLDesc: 'Happytime HTTP API that accepts note URLs, e.g. http://127.0.0.1:3000/api/xhs/import',
+            happytimeURLLabel: 'Happytime Webhook URL',
+            happytimeURLDesc: 'HTTP endpoint that receives note JSON; data only, no local download',
             happytimeSwitchLabel: 'Enable Happytime Push',
-            happytimeSwitchDesc: 'When enabled, you can push the current note URL to Happytime in one click',
+            happytimeSwitchDesc: 'When enabled, push note metadata and media URLs to the webhook in one click',
             imageDownloadFormatLabel: 'Image Download Format',
             imageDownloadFormatDesc: 'Preferred file format for downloading images',
             saveSettingsButton: 'Save Settings',
@@ -291,10 +294,12 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
             pushDownloadTaskText: 'Push Download Task',
             pushDownloadTaskDescription: 'Send download request to the server',
             pushHappytimeText: 'Push to Happytime',
-            pushHappytimeDescription: 'Send the current note URL to Happytime',
-            pushHappytimeSuccess: 'Pushed to Happytime',
-            pushHappytimeError: 'Failed to push to Happytime. Check endpoint/server status.',
+            pushHappytimeDescription: 'Extract note data and media URLs, POST to webhook (no local save)',
+            pushHappytimeSuccess: 'Note data pushed to Happytime',
+            pushHappytimeError: 'Failed to push to Happytime. Check webhook/server status.',
             pushHappytimeDisabled: 'Enable Happytime push in script settings first',
+            pushHappytimeNoNote: 'No note data found. Open a note detail page and retry',
+            pushHappytimeNoMedia: 'No media download URLs extracted',
             extractPublishedLinksText: 'Extract Published Note Links',
             extractPublishedLinksDescription: '',
             extractLikedLinksText: 'Extract Liked Note Links',
@@ -643,11 +648,54 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
             showToast(t.pushHappytimeError);
             return;
         }
+        if (!(currentUrl.includes(`https://www.${currentSite}.com/explore/`) || currentUrl.includes(
+            `https://www.${currentSite}.com/discovery/item/`))) {
+            showToast(t.pushHappytimeNoNote);
+            return;
+        }
+
+        const note = extractNoteInfo();
+        if (!note) {
+            showToast(t.pushHappytimeNoNote);
+            return;
+        }
+
+        let mediaUrls = [];
+        try {
+            mediaUrls = note.type === "normal" ? generateImageUrl(note) : generateVideoUrl(note);
+        } catch (error) {
+            console.error("Happytime media extract error:", error);
+        }
+        if (!mediaUrls || mediaUrls.length === 0) {
+            showToast(t.pushHappytimeNoMedia);
+            return;
+        }
+
+        const user = note.user || {};
         const payload = {
             source: "xhs-downloader-userscript",
+            mode: "webhook",
+            download: false,
             url: window.location.href,
-            title: document.title || "",
+            work_id: note.noteId || note.id || "",
+            title: note.title || "",
+            description: note.desc || "",
+            work_type: note.type || "",
+            tags: Array.isArray(note.tagList)
+                ? note.tagList.map((item) => item.name || item).filter(Boolean)
+                : [],
+            author_id: user.userId || user.id || "",
+            author_name: user.nickname || user.nickName || "",
+            liked_count: note.interactInfo?.likedCount ?? note.likedCount ?? null,
+            collected_count: note.interactInfo?.collectedCount ?? note.collectedCount ?? null,
+            comment_count: note.interactInfo?.commentCount ?? note.commentCount ?? null,
+            share_count: note.interactInfo?.shareCount ?? note.shareCount ?? null,
+            time: note.time || note.lastUpdateTime || null,
+            media_urls: mediaUrls,
+            cover: note.imageList?.[0]?.urlDefault || note.imageList?.[0]?.url || "",
+            note: note,
         };
+
         GM_xmlhttpRequest({
             method: "POST",
             url: endpoint,
@@ -659,6 +707,7 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
                 if (response.status >= 200 && response.status < 300) {
                     showToast(t.pushHappytimeSuccess);
                 } else {
+                    console.error("Happytime webhook response:", response.status, response.responseText);
                     showToast(t.pushHappytimeError);
                 }
             },

@@ -287,7 +287,7 @@ async def example_api():
 </ul>
 <p>⭐ 如需与 Happytime 等外部项目联动，推荐两条路径：</p>
 <ol>
-<li><b>油猴 → Happytime</b>：脚本设置中开启 <code>启用 Happytime 推送</code>，填写 Happytime 接口地址；作品页点击 <code>推送到 Happytime</code>。请求体为 <code>{"source":"xhs-downloader-userscript","url":"...","title":"..."}</code>，由 Happytime 再调用本项目 API（<code>POST /xhs/detail</code>，<code>download=true</code>）完成下载入库。</li>
+<li><b>油猴 → Happytime</b>：脚本设置中开启 <code>启用 Happytime 推送</code>，填写 webhook 地址；作品页点击 <code>推送到 Happytime</code>。脚本会提取帖子元数据与无水印媒体链接并 <code>POST</code> JSON（<code>download:false</code>），<b>不会下载到本地</b>。Happytime 自行拉取 <code>media_urls</code> 入库即可。</li>
 <li><b>XHS 下载 → Happytime 回调</b>：在 <code>settings.json</code> 配置 <code>import_webhook</code>（Web 配置页也可改）。任意模式下载成功后，本项目会向该地址 POST 作品元数据与本地文件路径，Happytime 直接入库即可。</li>
 </ol>
 <h2>📜 脚本说明</h2>
