@@ -142,6 +142,11 @@
                                             input.focus();
                                         }
                                     </script>
+                                    <div class="form-group">
+                                        <label class="form-label" for="import_webhook">Happytime 导入回调</label>
+                                        <input type="text" class="form-input" id="import_webhook" name="import_webhook" value="{{ config.import_webhook }}" placeholder="http://127.0.0.1:3000/api/xhs/webhook">
+                                        <p style="margin-top:8px;color:var(--text-muted, #666);font-size:13px;">下载成功后 POST 作品元数据与本地文件路径到该地址，供 Happytime 入库。</p>
+                                    </div>
                                 </div>
                                 
                                 <div class="settings-section">

@@ -2,12 +2,12 @@
 // @name           XHS-Downloader
 // @namespace      xhs_downloader
 // @homepage       https://github.com/JoeanAmier/XHS-Downloader
-// @version        2.3.6
+// @version        2.3.7
 // @tag            小红书
 // @tag            RedNote
 // @tag            XiaoHongShu
-// @description    提取小红书作品/用户链接，下载小红书图文/视频作品文件
-// @description:en Extract RedNote works/user links, Download images/videos files
+// @description    提取小红书作品/用户链接，下载小红书图文/视频作品文件；支持一键推送到 Happytime
+// @description:en Extract RedNote works/user links, Download images/videos files; push to Happytime
 // @author         JoeanAmier
 // @match          http*://www.xiaohongshu.com/explore*
 // @match          http*://www.xiaohongshu.com/discovery/item/*
@@ -26,6 +26,9 @@
 // @grant          GM_setClipboard
 // @grant          GM_registerMenuCommand
 // @grant          GM_unregisterMenuCommand
+// @grant          GM_xmlhttpRequest
+// @connect        127.0.0.1
+// @connect        localhost
 // @license        GNU General Public License v3.0
 // @run-at         document-end
 // @updateURL      https://raw.githubusercontent.com/JoeanAmier/XHS-Downloader/master/static/XHS-Downloader.js
@@ -127,6 +130,10 @@ KS-Downloader（快手、KuaiShou）：https://github.com/JoeanAmier/KS-Download
             scriptServerURLDesc: '用户脚本连接的 WebSocket 服务器',
             scriptServerSwitchLabel: '连接服务器',
             scriptServerSwitchDesc: '启用后，可以把作品下载任务推送至服务器',
+            happytimeURLLabel: 'Happytime 接口地址',
+            happytimeURLDesc: '接收作品链接的 Happytime HTTP 接口，例如 http://127.0.0.1:3000/api/xhs/import',
+            happytimeSwitchLabel: '启用 Happytime 推送',
+            happytimeSwitchDesc: '启用后，可在作品页一键把链接推送到 Happytime',
             imageDownloadFormatLabel: '图片下载格式',
             imageDownloadFormatDesc: '图文作品文件下载格式',
             saveSettingsButton: '保存设置',
@@ -145,6 +152,11 @@ KS-Downloader（快手、KuaiShou）：https://github.com/JoeanAmier/KS-Download
             downloadNoteFilesDescription: '下载当前作品文件',
             pushDownloadTaskText: '推送下载任务',
             pushDownloadTaskDescription: '向服务器发送下载请求',
+            pushHappytimeText: '推送到 Happytime',
+            pushHappytimeDescription: '把当前作品链接发送给 Happytime',
+            pushHappytimeSuccess: '已推送到 Happytime',
+            pushHappytimeError: '推送 Happytime 失败，请检查接口地址或服务状态',
+            pushHappytimeDisabled: '请先在脚本设置中启用 Happytime 推送',
             extractPublishedLinksText: '提取发布作品链接',
             extractPublishedLinksDescription: '提取账号发布作品链接至剪贴板',
             extractLikedLinksText: '提取点赞作品链接',
@@ -256,6 +268,10 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
             scriptServerURLDesc: 'The WebSocket server address the script connects to',
             scriptServerSwitchLabel: 'Connect to Server',
             scriptServerSwitchDesc: 'When enabled, download tasks can be pushed to the server',
+            happytimeURLLabel: 'Happytime Endpoint',
+            happytimeURLDesc: 'Happytime HTTP API that accepts note URLs, e.g. http://127.0.0.1:3000/api/xhs/import',
+            happytimeSwitchLabel: 'Enable Happytime Push',
+            happytimeSwitchDesc: 'When enabled, you can push the current note URL to Happytime in one click',
             imageDownloadFormatLabel: 'Image Download Format',
             imageDownloadFormatDesc: 'Preferred file format for downloading images',
             saveSettingsButton: 'Save Settings',
@@ -274,6 +290,11 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
             downloadNoteFilesDescription: '',
             pushDownloadTaskText: 'Push Download Task',
             pushDownloadTaskDescription: 'Send download request to the server',
+            pushHappytimeText: 'Push to Happytime',
+            pushHappytimeDescription: 'Send the current note URL to Happytime',
+            pushHappytimeSuccess: 'Pushed to Happytime',
+            pushHappytimeError: 'Failed to push to Happytime. Check endpoint/server status.',
+            pushHappytimeDisabled: 'Enable Happytime push in script settings first',
             extractPublishedLinksText: 'Extract Published Note Links',
             extractPublishedLinksDescription: '',
             extractLikedLinksText: 'Extract Liked Note Links',
@@ -310,6 +331,7 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
     const iconBase64 = "data:image/png;base64,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";
 
     const defaultsWebSocketURL = "ws://127.0.0.1:5558";
+    const defaultsHappytimeURL = "http://127.0.0.1:3000/api/xhs/import";
 
     let config = {
         disclaimer: GM_getValue("disclaimer", false),
@@ -322,6 +344,8 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
         imageDownloadFormat: GM_getValue("imageDownloadFormat", "jpeg"),
         scriptServerURL: GM_getValue("scriptServerURL", defaultsWebSocketURL),
         scriptServerSwitch: GM_getValue("scriptServerSwitch", false),
+        happytimeURL: GM_getValue("happytimeURL", defaultsHappytimeURL),
+        happytimeSwitch: GM_getValue("happytimeSwitch", false),
         fileNameFormat: undefined,
         icon: {
             type: 'image', // 可选: image/svg/font
@@ -422,6 +446,16 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
         }
         config.scriptServerSwitch = value;
         GM_setValue("scriptServerSwitch", config.scriptServerSwitch);
+    }
+
+    const updateHappytimeURL = (value) => {
+        config.happytimeURL = value;
+        GM_setValue("happytimeURL", config.happytimeURL);
+    }
+
+    const updateHappytimeSwitch = (value) => {
+        config.happytimeSwitch = value;
+        GM_setValue("happytimeSwitch", config.happytimeSwitch);
     }
 
     const updateImageDownloadFormat = (value) => {
@@ -597,6 +631,41 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
                 abnormal(t.extractError);
             }
         }
+    };
+
+    const pushToHappytime = () => {
+        if (!config.happytimeSwitch) {
+            showToast(t.pushHappytimeDisabled);
+            return;
+        }
+        const endpoint = (config.happytimeURL || defaultsHappytimeURL).trim();
+        if (!endpoint) {
+            showToast(t.pushHappytimeError);
+            return;
+        }
+        const payload = {
+            source: "xhs-downloader-userscript",
+            url: window.location.href,
+            title: document.title || "",
+        };
+        GM_xmlhttpRequest({
+            method: "POST",
+            url: endpoint,
+            headers: {
+                "Content-Type": "application/json; charset=utf-8",
+            },
+            data: JSON.stringify(payload),
+            onload: (response) => {
+                if (response.status >= 200 && response.status < 300) {
+                    showToast(t.pushHappytimeSuccess);
+                } else {
+                    showToast(t.pushHappytimeError);
+                }
+            },
+            onerror: () => showToast(t.pushHappytimeError),
+            ontimeout: () => showToast(t.pushHappytimeError),
+            timeout: 15000,
+        });
     };
 
     const triggerDownload = (name, blob) => {
@@ -1417,6 +1486,20 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
                                                         checked: GM_getValue("scriptServerSwitch", false),
                                                     });
 
+        const happytimeURL = createTextInput({
+                                                 label: t.happytimeURLLabel,
+                                                 description: t.happytimeURLDesc,
+                                                 placeholder: defaultsHappytimeURL,
+                                                 value: GM_getValue("happytimeURL", defaultsHappytimeURL),
+                                                 disabled: !GM_getValue("happytimeSwitch", false),
+                                             });
+
+        const happytimeSwitch = createSwitchItem({
+                                                     label: t.happytimeSwitchLabel,
+                                                     description: t.happytimeSwitchDesc,
+                                                     checked: GM_getValue("happytimeSwitch", false),
+                                                 });
+
         const imageDownloadFormat = createSelectItem({
                                                          label: t.imageDownloadFormatLabel,
                                                          description: t.imageDownloadFormatDesc,
@@ -1441,6 +1524,10 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
             scriptServerURL.querySelector('input').disabled = !e.target.checked;
             scriptServerURL.querySelector('.text-input').style.opacity = e.target.checked ? 1 : 0.6;
         });
+        happytimeSwitch.querySelector('input').addEventListener('change', (e) => {
+            happytimeURL.querySelector('input').disabled = !e.target.checked;
+            happytimeURL.querySelector('.text-input').style.opacity = e.target.checked ? 1 : 0.6;
+        });
 
         // 组合内容
         body.appendChild(filePack);
@@ -1452,6 +1539,8 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
         body.appendChild(keepMenuVisible);
         body.appendChild(scriptServerURL);
         body.appendChild(scriptServerSwitch);
+        body.appendChild(happytimeURL);
+        body.appendChild(happytimeSwitch);
 
         // 创建底部按钮
         const footer = document.createElement('div');
@@ -1482,6 +1571,8 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
             updateMaxScrollCount(parseInt(scrollCount.querySelector('input').value) || 50)
             updateScriptServerURL(scriptServerURL.querySelector('.text-input').value.trim() || defaultsWebSocketURL);
             updateScriptServerSwitch(scriptServerSwitch.querySelector('input').checked);
+            updateHappytimeURL(happytimeURL.querySelector('.text-input').value.trim() || defaultsHappytimeURL);
+            updateHappytimeSwitch(happytimeSwitch.querySelector('input').checked);
             updateImageDownloadFormat(imageDownloadFormat.querySelector('select').value.trim() || "jpeg");
             // updateFileNameFormat(nameFormat.querySelector('.text-input').value.trim() || null);
             closeSettingsModal();
@@ -2298,6 +2389,14 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
                                    icon: ' 🌏 ',
                                    action: () => extractDownloadLinks(true),
                                    description: t.pushDownloadTaskDescription
+                               });
+            }
+            if (config.happytimeSwitch) {
+                menuItems.push({
+                                   text: t.pushHappytimeText,
+                                   icon: ' 🧡 ',
+                                   action: () => pushToHappytime(),
+                                   description: t.pushHappytimeDescription
                                });
             }
         } else if (currentUrl.includes(`https://www.${currentSite}.com/user/profile/`)) {

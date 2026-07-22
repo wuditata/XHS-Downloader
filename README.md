@@ -281,6 +281,11 @@ async def example_api():
 <li>当您在浏览器中访问作品页面时，点击用户脚本菜单中的 <code>推送下载任务</code> 选项</li>
 <li>用户脚本会将下载任务发送给项目程序，由项目程序负责处理和下载文件</li>
 </ul>
+<p>⭐ 如需与 Happytime 等外部项目联动，推荐两条路径：</p>
+<ol>
+<li><b>油猴 → Happytime</b>：脚本设置中开启 <code>启用 Happytime 推送</code>，填写 Happytime 接口地址；作品页点击 <code>推送到 Happytime</code>。请求体为 <code>{"source":"xhs-downloader-userscript","url":"...","title":"..."}</code>，由 Happytime 再调用本项目 API（<code>POST /xhs/detail</code>，<code>download=true</code>）完成下载入库。</li>
+<li><b>XHS 下载 → Happytime 回调</b>：在 <code>settings.json</code> 配置 <code>import_webhook</code>（Web 配置页也可改）。任意模式下载成功后，本项目会向该地址 POST 作品元数据与本地文件路径，Happytime 直接入库即可。</li>
+</ol>
 <h2>📜 脚本说明</h2>
 <ul>
 <li>下载小红书作品文件时，脚本需要花费时间处理文件，请等待片刻，请勿多次点击下载按钮</li>
@@ -511,6 +516,12 @@ async def example():
 <td align="center">bool</td>
 <td align="center">是否开启用户脚本服务器，用于接收浏览器用户脚本的下载任务（TUI、MCP 和 API 模式生效）</td>
 <td align="center">false</td>
+</tr>
+<tr>
+<td align="center">import_webhook</td>
+<td align="center">str</td>
+<td align="center">下载成功后回调外部导入接口（如 Happytime）；为空则不回调。请求体包含作品元数据、本地文件夹与文件路径</td>
+<td align="center">空字符串</td>
 </tr>
 </tbody>
 </table>

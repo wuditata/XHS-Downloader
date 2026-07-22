@@ -34,6 +34,7 @@ class Settings:
         "write_mtime": False,  # 是否写入修改时间
         "language": "zh_CN",  # 语言设置
         "script_server": False,  # 是否启用脚本服务器
+        "import_webhook": "",  # 下载完成后回调 URL（Happytime 等外部导入接口）
     }
     # 根据操作系统设置编码格式
     encode = "UTF-8-SIG" if system() == "Windows" else "UTF-8"

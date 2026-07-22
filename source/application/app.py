@@ -50,6 +50,7 @@ from ..module import (
     # sleep_time,
     ScriptServer,
     INFO,
+    notify_import_webhook,
 )
 from ..translation import _, switch_language
 
@@ -145,10 +146,12 @@ class XHS:
         script_server: bool = False,
         script_host="0.0.0.0",
         script_port=5558,
+        import_webhook: str = "",
         **kwargs,
     ):
         switch_language(language)
         self.print = Print()
+        self.import_webhook = (import_webhook or "").strip()
         self.manager = Manager(
             ROOT,
             work_path,
@@ -228,7 +231,7 @@ class XHS:
                 self.logging(_("作品 {0} 存在下载记录，跳过下载").format(i))
                 count.skip += 1
             else:
-                __, result = await self.download.run(
+                path, result = await self.download.run(
                     u,
                     container["动图地址"],
                     index,
@@ -246,12 +249,47 @@ class XHS:
                     await self.__add_record(
                         i,
                     )
+                    await self.__notify_import(
+                        container,
+                        path,
+                    )
                 else:
                     count.fail += 1
         elif not u:
             self.logging(_("提取作品文件下载地址失败"), ERROR)
             count.fail += 1
         await self.save_data(container)
+
+    async def __notify_import(
+        self,
+        container: dict,
+        path,
+    ):
+        if not self.import_webhook:
+            return
+        files = []
+        if path and path.exists():
+            files = [str(p.resolve()) for p in path.iterdir() if p.is_file()]
+        payload = {
+            "source": "xhs-downloader",
+            "work_id": container.get("作品ID", ""),
+            "title": container.get("作品标题", ""),
+            "description": container.get("作品描述", ""),
+            "author_id": container.get("作者ID", ""),
+            "author_name": container.get("作者昵称", ""),
+            "work_type": container.get("作品类型", ""),
+            "work_link": container.get("作品链接", ""),
+            "folder": str(path.resolve()) if path else "",
+            "files": files,
+            "tags": container.get("作品标签", ""),
+            "publish_time": container.get("发布时间", ""),
+        }
+        await notify_import_webhook(
+            self.import_webhook,
+            payload,
+            self.print,
+            timeout=self.manager.timeout,
+        )
 
     @data_cache
     async def save_data(

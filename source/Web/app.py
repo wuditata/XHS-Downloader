@@ -106,7 +106,9 @@ class WebServer:
         async def update_settings(data: dict):
             try:
                 config = data.get("config", {})
-                self.settings.update(config)
+                current = self.settings.run()
+                current.update(config)
+                self.settings.update(current)
                 return JSONResponse({"success": True})
             except Exception as e:
                 return JSONResponse({"error": str(e)})
