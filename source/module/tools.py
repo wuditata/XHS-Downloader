@@ -1,5 +1,6 @@
 from asyncio import sleep
-from random import uniform
+from random import lognormvariate
+from math import log
 from typing import Callable
 
 from rich import print
@@ -50,8 +51,13 @@ def logging(log: Callable, text, style=INFO):
         )
 
 
-async def sleep_time(
-    min_time: int | float = 2.0,
-    max_time: int | float = 4.0,
-):
-    await sleep(uniform(min_time, max_time))
+def get_wait_time(
+    avg_delay: float | int = 6.0,
+    sigma: float = 0.6,
+) -> float:
+    mu = log(avg_delay) - (sigma**2 / 2)
+    return max(0.5, lognormvariate(mu, sigma))
+
+
+async def sleep_time():
+    await sleep(get_wait_time())

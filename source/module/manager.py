@@ -2,6 +2,7 @@ from pathlib import Path
 from re import compile, sub
 from shutil import move, rmtree
 from os import utime
+from http.cookies import SimpleCookie
 from httpx import (
     AsyncClient,
     AsyncHTTPTransport,
@@ -66,6 +67,7 @@ class Manager:
         image_download: bool,
         video_download: bool,
         live_download: bool,
+        video_preference: str,
         download_record: bool,
         folder_mode: bool,
         author_archive: bool,
@@ -84,9 +86,6 @@ class Manager:
         self.blank_headers = HEADERS | {
             "user-agent": user_agent or USERAGENT,
         }
-        self.headers = self.blank_headers | {
-            "cookie": cookie,
-        }
         self.retry = retry
         self.chunk = chunk
         self.name_format = self.__check_name_format(name_format)
@@ -99,12 +98,14 @@ class Manager:
         self.print_proxy_tip()
         self.timeout = timeout
         self.request_client = AsyncClient(
-            headers=self.headers
+            headers=self.blank_headers
             | {
                 "referer": "https://www.xiaohongshu.com/",
             },
+            cookies=self.cookie_str_to_dict(cookie),
             timeout=timeout,
             verify=False,
+            http2=True,
             follow_redirects=True,
             mounts={
                 "http://": AsyncHTTPTransport(proxy=self.proxy),
@@ -123,6 +124,7 @@ class Manager:
         )
         self.image_download = self.check_bool(image_download, True)
         self.video_download = self.check_bool(video_download, True)
+        self.video_preference = self.check_video_preference(video_preference)
         self.live_download = self.check_bool(live_download, True)
         self.author_archive = self.check_bool(author_archive, False)
         self.write_mtime = self.check_bool(write_mtime, False)
@@ -158,7 +160,7 @@ class Manager:
             "avif",
         }:
             return i
-        return "png"
+        return "jpeg"
 
     @staticmethod
     def is_exists(path: Path) -> bool:
@@ -213,6 +215,12 @@ class Manager:
             ("发布时间 作者昵称 作品标题" for key in keys if key not in self.NAME_KEYS),
             format_,
         )
+
+    @staticmethod
+    def check_video_preference(preference: str) -> str:
+        if preference in {"resolution", "bitrate", "size"}:
+            return preference
+        return "resolution"
 
     def __check_proxy(
         self,
@@ -291,3 +299,9 @@ class Manager:
             and not self.folder.exists()
         ):
             move(old, self.folder)
+
+    @staticmethod
+    def cookie_str_to_dict(cookie_str: str) -> dict:
+        cookie = SimpleCookie()
+        cookie.load(cookie_str)
+        return {key: morsel.value for key, morsel in cookie.items()}

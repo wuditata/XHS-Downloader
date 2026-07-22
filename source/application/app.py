@@ -24,7 +24,7 @@ from uvicorn import Config, Server
 from typing import Callable
 
 from ..expansion import (
-    BrowserCookie,
+    # BrowserCookie,
     Cleaner,
     Converter,
     Namespace,
@@ -99,9 +99,14 @@ class XHS:
     VERSION_MAJOR = VERSION_MAJOR
     VERSION_MINOR = VERSION_MINOR
     VERSION_BETA = VERSION_BETA
-    LINK = compile(r"(?:https?://)?www\.xiaohongshu\.com/explore/\S+")
-    USER = compile(r"(?:https?://)?www\.xiaohongshu\.com/user/profile/[a-z0-9]+/\S+")
-    SHARE = compile(r"(?:https?://)?www\.xiaohongshu\.com/discovery/item/\S+")
+    LINK_XHS = compile(r"(?:https?://)?www\.xiaohongshu\.com/explore/\S+")
+    LINK_RN = compile(r"(?:https?://)?www\.rednote\.com/explore/\S+")
+    USER_XHS = compile(
+        r"(?:https?://)?www\.xiaohongshu\.com/user/profile/[a-z0-9]+/\S+"
+    )
+    USER_RN = compile(r"(?:https?://)?www\.rednote\.com/user/profile/[a-z0-9]+/\S+")
+    SHARE_XHS = compile(r"(?:https?://)?www\.xiaohongshu\.com/discovery/item/\S+")
+    SHARE_RN = compile(r"(?:https?://)?www\.rednote\.com/discovery/item/\S+")
     SHORT = compile(r"(?:https?://)?xhslink\.com/[^\s\"<>\\^`{|}，。；！？、【】《》]+")
     ID = compile(r"(?:explore|item)/(\S+)?\?")
     ID_USER = compile(r"user/profile/[a-z0-9]+/(\S+)?\?")
@@ -126,16 +131,17 @@ class XHS:
         chunk=1024 * 1024,
         max_retry=5,
         record_data=False,
-        image_format="PNG",
+        image_format="JPEG",
         image_download=True,
         video_download=True,
         live_download=False,
+        video_preference="resolution",
         folder_mode=False,
         download_record=True,
         author_archive=False,
         write_mtime=False,
         language="zh_CN",
-        read_cookie: int | str = None,
+        # read_cookie: int | str = None,
         script_server: bool = False,
         script_host="0.0.0.0",
         script_port=5558,
@@ -150,7 +156,8 @@ class XHS:
             name_format,
             chunk,
             user_agent,
-            self.read_browser_cookie(read_cookie) or cookie,
+            cookie,
+            # self.read_browser_cookie(read_cookie) or cookie,
             proxy,
             timeout,
             max_retry,
@@ -159,6 +166,7 @@ class XHS:
             image_download,
             video_download,
             live_download,
+            video_preference,
             download_record,
             folder_mode,
             author_archive,
@@ -194,8 +202,15 @@ class XHS:
             data, self.manager.image_format
         )
 
-    def __extract_video(self, container: dict, data: Namespace):
-        container["下载地址"] = self.video.get_video_link(data)
+    def __extract_video(
+        self,
+        container: dict,
+        data: Namespace,
+    ):
+        container["下载地址"] = self.video.deal_video_link(
+            data,
+            self.manager.video_preference,
+        )
         container["动图地址"] = [
             None,
         ]
@@ -224,7 +239,9 @@ class XHS:
                     container["作品类型"],
                     container["时间戳"],
                 )
-                if result:
+                if not result:
+                    count.skip += 1
+                elif all(result):
                     count.success += 1
                     await self.__add_record(
                         i,
@@ -362,11 +379,17 @@ class XHS:
                     u.group(),
                     False,
                 )
-            if u := self.SHARE.search(i):
+            if u := self.SHARE_XHS.search(i):
                 urls.append(u.group())
-            elif u := self.LINK.search(i):
+            elif u := self.SHARE_RN.search(i):
                 urls.append(u.group())
-            elif u := self.USER.search(i):
+            elif u := self.LINK_XHS.search(i):
+                urls.append(u.group())
+            elif u := self.LINK_RN.search(i):
+                urls.append(u.group())
+            elif u := self.USER_XHS.search(i):
+                urls.append(u.group())
+            elif u := self.USER_RN.search(i):
                 urls.append(u.group())
         return urls
 
@@ -488,7 +511,10 @@ class XHS:
         ):
             return data
         data = await self._deal_download_tasks(
-            data,
+            data
+            | {
+                "作品链接": url,
+            },
             namespace,
             id_,
             download,
@@ -662,18 +688,18 @@ class XHS:
         await self.stop_script_server()
         await self.manager.close()
 
-    @staticmethod
-    def read_browser_cookie(value: str | int) -> str:
-        return (
-            BrowserCookie.get(
-                value,
-                domains=[
-                    "xiaohongshu.com",
-                ],
-            )
-            if value
-            else ""
-        )
+    # @staticmethod
+    # def read_browser_cookie(value: str | int) -> str:
+    #     return (
+    #         BrowserCookie.get(
+    #             value,
+    #             domains=[
+    #                 "xiaohongshu.com",
+    #             ],
+    #         )
+    #         if value
+    #         else ""
+    #     )
 
     async def run_api_server(
         self,

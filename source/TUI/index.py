@@ -62,7 +62,7 @@ class Index(Screen):
             ),
             Input(placeholder=_("多个链接之间使用空格分隔")),
             HorizontalScroll(
-                Button(_("下载无水印作品文件"), id="deal"),
+                Button(_("下载作品文件"), id="deal"),
                 Button(_("读取剪贴板"), id="paste"),
                 Button(_("清空输入框"), id="reset"),
                 Button(_("中断下载"), id="cancel"),
