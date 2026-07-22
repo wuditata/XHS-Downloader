@@ -257,7 +257,11 @@ async def example_api():
 </ul>
 <h1 id="user-scripts">🕹 用户脚本</h1>
 <p>如果您的浏览器安装了 <a href="https://www.tampermonkey.net/">Tampermonkey</a> 浏览器扩展程序，可以使用用户脚本体验项目功能！</p>
-<p>用户脚本链接（右键单击复制链接）：<a href="https://raw.githubusercontent.com/JoeanAmier/XHS-Downloader/refs/heads/master/static/XHS-Downloader.js">master 分支</a>、<a href="https://raw.githubusercontent.com/JoeanAmier/XHS-Downloader/refs/heads/develop/static/XHS-Downloader.js">develop 分支</a></p>
+<p>用户脚本链接（右键单击复制链接）：</p>
+<ul>
+<li>本 fork（含 Happytime 推送）：<a href="https://raw.githubusercontent.com/wuditata/XHS-Downloader/cursor/sync-upstream-happytime-2d0a/static/XHS-Downloader.js">当前分支</a>、<a href="https://raw.githubusercontent.com/wuditata/XHS-Downloader/master/static/XHS-Downloader.js">master</a></li>
+<li>上游原版：<a href="https://raw.githubusercontent.com/JoeanAmier/XHS-Downloader/refs/heads/master/static/XHS-Downloader.js">master</a>、<a href="https://raw.githubusercontent.com/JoeanAmier/XHS-Downloader/refs/heads/develop/static/XHS-Downloader.js">develop</a></li>
+</ul>
 <img src="static/screenshot/脚本安装教程.png" alt="">
 <hr>
 <details>
