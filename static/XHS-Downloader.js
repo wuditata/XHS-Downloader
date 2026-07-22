@@ -31,9 +31,9 @@
 // @connect        localhost
 // @license        GNU General Public License v3.0
 // @run-at         document-end
-// @updateURL      https://raw.githubusercontent.com/JoeanAmier/XHS-Downloader/master/static/XHS-Downloader.js
-// @downloadURL    https://raw.githubusercontent.com/JoeanAmier/XHS-Downloader/master/static/XHS-Downloader.js
-// @supportURL     https://github.com/JoeanAmier/XHS-Downloader/issues
+// @updateURL      https://raw.githubusercontent.com/wuditata/XHS-Downloader/master/static/XHS-Downloader.js
+// @downloadURL    https://raw.githubusercontent.com/wuditata/XHS-Downloader/master/static/XHS-Downloader.js
+// @supportURL     https://github.com/wuditata/XHS-Downloader/issues
 // @require        https://cdnjs.cloudflare.com/ajax/libs/jszip/3.9.1/jszip.min.js
 // ==/UserScript==
 
