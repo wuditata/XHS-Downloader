@@ -2,7 +2,7 @@
 // @name           XHS-Downloader
 // @namespace      xhs_downloader
 // @homepage       https://github.com/JoeanAmier/XHS-Downloader
-// @version        2.2.3
+// @version        2.2.4
 // @tag            小红书
 // @tag            RedNote
 // @description    提取小红书作品/用户链接，下载小红书无水印图文/视频作品文件
@@ -33,6 +33,10 @@
     const iconBase64 = "data:image/png;base64,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";
 
     const defaultsWebSocketURL = "ws://127.0.0.1:5558";
+    const defaultFileNameFormat = "作者昵称 发布时间 作品标题";
+    const fileNameFormatKeys = new Set([
+        "作者昵称", "作者ID", "发布时间", "作品标题", "作品ID", "作品类型",
+    ]);
 
     let config = {
         disclaimer: GM_getValue("disclaimer", false),
@@ -44,7 +48,7 @@
         imageCheckboxSwitch: GM_getValue("imageCheckboxSwitch", true), // imageDownloadFormat: GM_getValue("imageDownloadFormat", "JPG"),
         scriptServerURL: GM_getValue("scriptServerURL", defaultsWebSocketURL),
         scriptServerSwitch: GM_getValue("scriptServerSwitch", false),
-        fileNameFormat: undefined,
+        fileNameFormat: GM_getValue("fileNameFormat", defaultFileNameFormat),
         icon: {
             type: 'image', // 可选: image/svg/font
             image: {
@@ -80,7 +84,8 @@
 4. 提取推荐作品链接、搜索作品、用户链接时，脚本可以自动滚动指定次数加载更多内容，默认滚动次数：50 次
 5. 自动滚动页面功能默认关闭；用户可以自由开启，并修改滚动页面次数，修改后立即生效
 6. 如果未开启自动滚动页面功能，用户需要手动滚动页面以便加载更多内容后再进行其他操作
-7. 支持作品文件打包下载；该功能默认开启，多个文件的作品将会以压缩包格式下载
+7. 支持作品文件打包下载；该功能默认开启，多个文件的作品将会以压缩包格式下载；可在设置中关闭，关闭后多图将分别下载
+8. 可在设置中自定义本地下载文件名称格式，默认：作者昵称 发布时间 作品标题
 
 项目开源地址：https://github.com/JoeanAmier/XHS-Downloader
 `
@@ -179,7 +184,8 @@
     }
 
     const updateFileNameFormat = (value) => {
-        config.fileNameFormat = value;
+        const format = (value || "").trim() || defaultFileNameFormat;
+        config.fileNameFormat = format;
         GM_setValue("fileNameFormat", config.fileNameFormat);
     };
 
@@ -271,7 +277,7 @@ KS-Downloader（快手、KuaiShou）：https://github.com/JoeanAmier/KS-Download
     };
 
     const download = async (urls, note, server = false,) => {
-        const name = extractName();
+        const name = extractName(note);
         if (server) {
             let data = {data: note, index: null,};
             if (note.type === "normal") {
@@ -449,13 +455,95 @@ KS-Downloader（快手、KuaiShou）：https://github.com/JoeanAmier/KS-Download
         return str;
     };
 
-    const extractName = () => {
-        let name = document.title.replace(/ - 小红书$/, "")
-                           .replace(/[^\u4e00-\u9fa5a-zA-Z0-9 ~!@#$%&()_\-+=\[\];"',.！（）【】：“”，。《》？]/g, "");
-        name = truncateString(name, 64,);
-        let match = currentUrl.match(/\/([0-9a-z]+?)\?/);
-        let id = match ? match[1] : null;
-        return name === "" ? id : name
+    const sanitizeFileName = (str) => {
+        return String(str || "")
+            .replace(/[^\u4e00-\u9fa5a-zA-Z0-9 ~!@#$%&()_\-+=\[\];"',.！（）【】：“”，。《》？]/g, "")
+            .trim();
+    };
+
+    const extractNoteId = (note) => {
+        if (note?.noteId) {
+            return note.noteId;
+        }
+        let match = currentUrl.match(/\/explore\/([0-9a-z]+)/i)
+            || currentUrl.match(/\/([0-9a-z]+?)\?/);
+        return match ? match[1] : null;
+    };
+
+    const formatNoteTime = (timestamp) => {
+        if (!timestamp) {
+            return "";
+        }
+        const date = new Date(Number(timestamp));
+        if (Number.isNaN(date.getTime())) {
+            return "";
+        }
+        const pad = (n) => String(n).padStart(2, "0");
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}_${pad(date.getHours())}.${pad(date.getMinutes())}.${pad(date.getSeconds())}`;
+    };
+
+    const classifyNoteType = (note) => {
+        const type = note?.type;
+        const list = note?.imageList || [];
+        if ((type !== "video" && type !== "normal") || list.length === 0) {
+            return "未知";
+        }
+        if (type === "video") {
+            return list.length === 1 ? "视频" : "图集";
+        }
+        return "图文";
+    };
+
+    const getNoteFieldValue = (note, key) => {
+        const user = note?.user || {};
+        switch (key) {
+            case "作者昵称":
+                return user.nickname || user.nickName || "";
+            case "作者ID":
+                return user.userId || user.userid || "";
+            case "发布时间":
+                return formatNoteTime(note?.time);
+            case "作品标题": {
+                const title = sanitizeFileName(note?.title);
+                if (title) {
+                    return truncateString(title, 64);
+                }
+                const desc = sanitizeFileName(note?.desc);
+                if (desc) {
+                    return truncateString(desc, 64);
+                }
+                return extractNoteId(note) || "";
+            }
+            case "作品ID":
+                return extractNoteId(note) || "";
+            case "作品类型":
+                return classifyNoteType(note);
+            default:
+                return "";
+        }
+    };
+
+    const resolveFileNameFormat = () => {
+        const raw = (config.fileNameFormat || "").trim() || defaultFileNameFormat;
+        const keys = raw.split(/\s+/).filter(Boolean);
+        const valid = keys.filter((key) => fileNameFormatKeys.has(key));
+        return valid.length > 0 ? valid : defaultFileNameFormat.split(/\s+/);
+    };
+
+    const extractName = (note) => {
+        const parts = [];
+        for (const key of resolveFileNameFormat()) {
+            const value = sanitizeFileName(getNoteFieldValue(note, key));
+            if (value) {
+                parts.push(value);
+            }
+        }
+        let name = parts.join("_");
+        name = truncateString(name, 128);
+        if (name) {
+            return name;
+        }
+        return extractNoteId(note) || "download";
     };
 
     const downloadVideo = async (url, name) => {
@@ -1115,7 +1203,7 @@ KS-Downloader（快手、KuaiShou）：https://github.com/JoeanAmier/KS-Download
         // 文件打包开关
         const filePack = createSwitchItem({
                                               label: '文件打包下载',
-                                              description: '启用后，多个文件的作品将会以压缩包格式下载',
+                                              description: '启用后，多个文件的作品会打成 zip；关闭后，多图将分别下载为独立文件（单文件始终不压缩）',
                                               checked: GM_getValue("packageDownloadFiles", true),
                                           });
 
@@ -1167,13 +1255,13 @@ KS-Downloader（快手、KuaiShou）：https://github.com/JoeanAmier/KS-Download
         //                                                  options: ["AUTO", "PNG", "JPG",],
         //                                                  value: GM_getValue("imageDownloadFormat", "JPG"),
         //                                              });
-        //
-        // const nameFormat = createTextInput({
-        //                                        label: '文件名称格式',
-        //                                        description: '设置文件的名称格式（例如：{date}-{title}）。',
-        //                                        placeholder: '{date}-{title}',
-        //                                        value: GM_getValue("fileNameFormat",)
-        //                                    });
+
+        const nameFormat = createTextInput({
+                                               label: '文件名称格式',
+                                               description: '空格分隔字段，以下划线拼接。支持：作者昵称 作者ID 发布时间 作品标题 作品ID 作品类型',
+                                               placeholder: defaultFileNameFormat,
+                                               value: GM_getValue("fileNameFormat", defaultFileNameFormat),
+                                           });
 
         // 绑定自动滚动开关控制次数输入
         autoScroll.querySelector('input').addEventListener('change', (e) => {
@@ -1187,6 +1275,7 @@ KS-Downloader（快手、KuaiShou）：https://github.com/JoeanAmier/KS-Download
 
         // 组合内容
         body.appendChild(filePack);
+        body.appendChild(nameFormat);
         body.appendChild(autoScroll);
         body.appendChild(scrollCount);
         body.appendChild(linkCheckboxSwitch);
@@ -1225,7 +1314,7 @@ KS-Downloader（快手、KuaiShou）：https://github.com/JoeanAmier/KS-Download
             updateMaxScrollCount(parseInt(scrollCount.querySelector('input').value) || 50)
             updateScriptServerURL(scriptServerURL.querySelector('.text-input').value.trim() || defaultsWebSocketURL);
             updateScriptServerSwitch(scriptServerSwitch.querySelector('input').checked);
-            // updateFileNameFormat(nameFormat.querySelector('.text-input').value.trim() || null);
+            updateFileNameFormat(nameFormat.querySelector('.text-input').value.trim() || defaultFileNameFormat);
             closeSettingsModal();
         });
 
