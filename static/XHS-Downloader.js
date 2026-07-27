@@ -2,7 +2,7 @@
 // @name           XHS-Downloader
 // @namespace      xhs_downloader
 // @homepage       https://github.com/JoeanAmier/XHS-Downloader
-// @version        2.3.6
+// @version        2.3.6.1
 // @tag            小红书
 // @tag            RedNote
 // @tag            XiaoHongShu
@@ -55,10 +55,11 @@
 3. 提取推荐作品链接、搜索作品、用户链接时，脚本可以自动滚动指定次数加载更多内容，默认滚动次数：50 次
 4. 自动滚动页面功能默认关闭；用户可以自由开启，并修改滚动页面次数，修改后立即生效
 5. 如果未开启自动滚动页面功能，用户需要手动滚动页面以便加载更多内容后再进行其他操作
-6. 支持作品文件打包下载；该功能默认开启，多个文件的作品将会以压缩包格式下载
+6. 支持作品文件打包下载；该功能默认开启，多个文件的作品将会以压缩包格式下载；可在设置中关闭，关闭后多图将分别下载
 7. 向服务器推送下载任务时，文件格式、名称规则等设置以服务器配置文件中的设置为准
 8. 使用全局代理工具可能会导致脚本下载文件失败，如有异常，请尝试关闭代理工具，必要时向作者反馈
-9. XHS-Downloader 用户脚本仅实现可见即可得的数据采集功能，无任何收费功能和破解功能
+9. 可在设置中自定义本地下载文件名称格式，默认：作者昵称 发布时间 作品标题
+10. XHS-Downloader 用户脚本仅实现可见即可得的数据采集功能，无任何收费功能和破解功能
 
 项目开源地址：https://github.com/JoeanAmier/XHS-Downloader
 `,
@@ -114,13 +115,18 @@ KS-Downloader（快手、KuaiShou）：https://github.com/JoeanAmier/KS-Download
             autoScrollLabel: '自动滚动页面',
             autoScrollDesc: '启用后，页面将根据规则自动滚动以便加载更多内容',
             filePackLabel: '文件打包下载',
-            filePackDesc: '启用后，多个文件的作品将会以压缩包格式下载',
+            filePackDesc: '启用后，多个文件的作品会打成 zip；关闭后，多图将分别下载为独立文件（单文件始终不压缩）',
             scrollCountLabel: '自动滚动次数',
             scrollCountDesc: '自动滚动页面的次数（仅在启用自动滚动页面时可用）',
             linkCheckboxSwitchLabel: '链接提取选择模式',
             linkCheckboxSwitchDesc: '关闭后，提取作品链接时无需确认直接提取全部链接',
             imageCheckboxSwitchLabel: '图片下载选择模式',
             imageCheckboxSwitchDesc: '关闭后，下载图文作品时无需确认直接下载全部文件',
+            showImageResolutionLabel: '显示图片宽高',
+            showImageResolutionDesc: '启用后，选图弹窗显示作品声明的宽×高（非实文件探测）',
+            fileNameFormatLabel: '文件名称格式',
+            fileNameFormatDesc: '空格分隔字段，以下划线拼接。支持：作者昵称 作者ID 发布时间 作品标题 作品ID 作品类型',
+            resolutionUnknown: '尺寸未知',
             keepMenuVisibleLabel: '菜单保持显示',
             keepMenuVisibleDesc: '启用后，功能菜单无需鼠标悬停始终保持显示',
             scriptServerURLLabel: 'WebSocket 服务器地址',
@@ -184,10 +190,11 @@ Notes:
 3. When extracting Recommendation, Search Notes, or User links, the script can automatically scroll a specified number of times. Default: 50 times.
 4. Auto-scroll is disabled by default; users can enable it and modify the scroll count. Changes take effect immediately.
 5. If auto-scroll is disabled, users must manually scroll the page to load more content before performing extractions.
-6. Supports batch downloading (ZIP format); this feature is enabled by default. Notes with multiple files will be downloaded as a compressed package.
+6. Supports batch downloading (ZIP format); this feature is enabled by default. Notes with multiple files will be downloaded as a compressed package. Disable it in settings to download images separately.
 7. When pushing tasks to a server, settings such as file format and naming rules are determined by the server's configuration file.
 8. Using global proxy tools may cause download failures. If issues occur, try disabling the proxy and provide feedback to the author if necessary.
-9. The XHS-Downloader userscript only provides "what you see is what you get" data collection; it contains no paid features or decryption/cracking functions.
+9. Local download filename format is configurable in settings. Default: 作者昵称 发布时间 作品标题
+10. The XHS-Downloader userscript only provides "what you see is what you get" data collection; it contains no paid features or decryption/cracking functions.
 
 Open Source: https://github.com/JoeanAmier/XHS-Downloader
 `,
@@ -243,13 +250,18 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
             autoScrollLabel: 'Auto-scroll Page',
             autoScrollDesc: 'When enabled, the page will automatically scroll to load more content',
             filePackLabel: 'Package Files for Download',
-            filePackDesc: 'When enabled, notes with multiple files will be downloaded as a ZIP archive',
+            filePackDesc: 'When enabled, multi-file notes download as a ZIP; when disabled, images download as separate files (single files are never zipped)',
             scrollCountLabel: 'Auto-scroll Count',
             scrollCountDesc: 'Number of times to scroll (only active when Auto-scroll is enabled)',
             linkCheckboxSwitchLabel: 'Link Extraction Selection Mode',
             linkCheckboxSwitchDesc: 'If disabled, all links will be extracted immediately without confirmation',
             imageCheckboxSwitchLabel: 'Image Download Selection Mode',
             imageCheckboxSwitchDesc: 'If disabled, all images will be downloaded immediately without confirmation',
+            showImageResolutionLabel: 'Show Image Resolution',
+            showImageResolutionDesc: 'When enabled, the image picker shows declared width×height (not probed from the file)',
+            fileNameFormatLabel: 'Filename Format',
+            fileNameFormatDesc: 'Space-separated fields joined by underscores. Supported: 作者昵称 作者ID 发布时间 作品标题 作品ID 作品类型',
+            resolutionUnknown: 'Unknown size',
             keepMenuVisibleLabel: 'Keep Menu Visible',
             keepMenuVisibleDesc: 'When enabled, the menu stays visible without needing a mouse hover',
             scriptServerURLLabel: 'WebSocket Server URL',
@@ -310,6 +322,10 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
     const iconBase64 = "data:image/png;base64,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";
 
     const defaultsWebSocketURL = "ws://127.0.0.1:5558";
+    const defaultFileNameFormat = "作者昵称 发布时间 作品标题";
+    const fileNameFormatKeys = new Set([
+        "作者昵称", "作者ID", "发布时间", "作品标题", "作品ID", "作品类型",
+    ]);
 
     let config = {
         disclaimer: GM_getValue("disclaimer", false),
@@ -319,10 +335,11 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
         keepMenuVisible: GM_getValue("keepMenuVisible", false),
         linkCheckboxSwitch: GM_getValue("linkCheckboxSwitch", true),
         imageCheckboxSwitch: GM_getValue("imageCheckboxSwitch", true),
+        showImageResolution: GM_getValue("showImageResolution", false),
         imageDownloadFormat: GM_getValue("imageDownloadFormat", "jpeg"),
         scriptServerURL: GM_getValue("scriptServerURL", defaultsWebSocketURL),
         scriptServerSwitch: GM_getValue("scriptServerSwitch", false),
-        fileNameFormat: undefined,
+        fileNameFormat: GM_getValue("fileNameFormat", defaultFileNameFormat),
         icon: {
             type: 'image', // 可选: image/svg/font
             image: {
@@ -409,6 +426,11 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
         GM_setValue("imageCheckboxSwitch", config.imageCheckboxSwitch);
     }
 
+    const updateShowImageResolution = (value) => {
+        config.showImageResolution = value;
+        GM_setValue("showImageResolution", config.showImageResolution);
+    };
+
     const updateScriptServerURL = (value) => {
         config.scriptServerURL = value;
         GM_setValue("scriptServerURL", config.scriptServerURL);
@@ -430,7 +452,8 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
     }
 
     const updateFileNameFormat = (value) => {
-        config.fileNameFormat = value;
+        const format = (value || "").trim() || defaultFileNameFormat;
+        config.fileNameFormat = format;
         GM_setValue("fileNameFormat", config.fileNameFormat);
     };
 
@@ -507,7 +530,11 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
                 const url = item.urlDefault || item.url;
                 if (url) {
                     items.push({
-                                   webp: url, index: index + 1, url: urls[index],
+                                   webp: url,
+                                   index: index + 1,
+                                   url: urls[index],
+                                   width: item.width || item.infoList?.[0]?.width || null,
+                                   height: item.height || item.infoList?.[0]?.height || null,
                                })
                 } else {
                     console.error("提取图片预览链接失败", item)
@@ -522,7 +549,7 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
     };
 
     const download = async (urls, note, server = false,) => {
-        const name = extractName();
+        const name = extractName(note);
         if (server) {
             let data = {data: note, index: null,};
             if (note.type === "normal") {
@@ -703,13 +730,95 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
         return str;
     };
 
-    const extractName = () => {
-        let name = document.title.replace(/ - 小红书$/, "").replace(/ - rednote$/, "")
-                           .replace(/[^\u4e00-\u9fa5a-zA-Z0-9 ~!@#$%&()_\-+=\[\];"',.！（）【】：“”，。《》？]/g, "");
-        name = truncateString(name, 64,);
-        let match = currentUrl.match(/\/([0-9a-z]+?)\?/);
-        let id = match ? match[1] : null;
-        return name === "" ? id : name
+    const sanitizeFileName = (str) => {
+        return String(str || "")
+            .replace(/[^\u4e00-\u9fa5a-zA-Z0-9 ~!@#$%&()_\-+=\[\];"',.！（）【】：“”，。《》？]/g, "")
+            .trim();
+    };
+
+    const extractNoteId = (note) => {
+        if (note?.noteId) {
+            return note.noteId;
+        }
+        let match = currentUrl.match(/\/explore\/([0-9a-z]+)/i)
+            || currentUrl.match(/\/([0-9a-z]+?)\?/);
+        return match ? match[1] : null;
+    };
+
+    const formatNoteTime = (timestamp) => {
+        if (!timestamp) {
+            return "";
+        }
+        const date = new Date(Number(timestamp));
+        if (Number.isNaN(date.getTime())) {
+            return "";
+        }
+        const pad = (n) => String(n).padStart(2, "0");
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}_${pad(date.getHours())}.${pad(date.getMinutes())}.${pad(date.getSeconds())}`;
+    };
+
+    const classifyNoteType = (note) => {
+        const type = note?.type;
+        const list = note?.imageList || [];
+        if ((type !== "video" && type !== "normal") || list.length === 0) {
+            return "未知";
+        }
+        if (type === "video") {
+            return list.length === 1 ? "视频" : "图集";
+        }
+        return "图文";
+    };
+
+    const getNoteFieldValue = (note, key) => {
+        const user = note?.user || {};
+        switch (key) {
+            case "作者昵称":
+                return user.nickname || user.nickName || "";
+            case "作者ID":
+                return user.userId || user.userid || "";
+            case "发布时间":
+                return formatNoteTime(note?.time);
+            case "作品标题": {
+                const title = sanitizeFileName(note?.title);
+                if (title) {
+                    return truncateString(title, 64);
+                }
+                const desc = sanitizeFileName(note?.desc);
+                if (desc) {
+                    return truncateString(desc, 64);
+                }
+                return extractNoteId(note) || "";
+            }
+            case "作品ID":
+                return extractNoteId(note) || "";
+            case "作品类型":
+                return classifyNoteType(note);
+            default:
+                return "";
+        }
+    };
+
+    const resolveFileNameFormat = () => {
+        const raw = (config.fileNameFormat || "").trim() || defaultFileNameFormat;
+        const keys = raw.split(/\s+/).filter(Boolean);
+        const valid = keys.filter((key) => fileNameFormatKeys.has(key));
+        return valid.length > 0 ? valid : defaultFileNameFormat.split(/\s+/);
+    };
+
+    const extractName = (note) => {
+        const parts = [];
+        for (const key of resolveFileNameFormat()) {
+            const value = sanitizeFileName(getNoteFieldValue(note, key));
+            if (value) {
+                parts.push(value);
+            }
+        }
+        let name = parts.join("_");
+        name = truncateString(name, 128);
+        if (name) {
+            return name;
+        }
+        return extractNoteId(note) || "download";
     };
 
     const downloadVideo = async (url, name) => {
@@ -1397,6 +1506,12 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
                                                          checked: GM_getValue("imageCheckboxSwitch", true),
                                                      });
 
+        const showImageResolution = createSwitchItem({
+                                                         label: t.showImageResolutionLabel,
+                                                         description: t.showImageResolutionDesc,
+                                                         checked: GM_getValue("showImageResolution", false),
+                                                     });
+
         const keepMenuVisible = createSwitchItem({
                                                      label: t.keepMenuVisibleLabel,
                                                      description: t.keepMenuVisibleDesc,
@@ -1425,12 +1540,12 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
                                                              .toUpperCase(),
                                                      });
 
-        // const nameFormat = createTextInput({
-        //                                        label: '文件名称格式',
-        //                                        description: '设置文件的名称格式（例如：{date}-{title}）。',
-        //                                        placeholder: '{date}-{title}',
-        //                                        value: GM_getValue("fileNameFormat",)
-        //                                    });
+        const nameFormat = createTextInput({
+                                               label: t.fileNameFormatLabel,
+                                               description: t.fileNameFormatDesc,
+                                               placeholder: defaultFileNameFormat,
+                                               value: GM_getValue("fileNameFormat", defaultFileNameFormat),
+                                           });
 
         // 绑定自动滚动开关控制次数输入
         autoScroll.querySelector('input').addEventListener('change', (e) => {
@@ -1444,10 +1559,12 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
 
         // 组合内容
         body.appendChild(filePack);
+        body.appendChild(nameFormat);
         body.appendChild(autoScroll);
         body.appendChild(scrollCount);
         body.appendChild(linkCheckboxSwitch);
         body.appendChild(imageCheckboxSwitch);
+        body.appendChild(showImageResolution);
         body.appendChild(imageDownloadFormat);
         body.appendChild(keepMenuVisible);
         body.appendChild(scriptServerURL);
@@ -1479,11 +1596,12 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
             updateKeepMenuVisible(keepMenuVisible.querySelector('input').checked);
             updateLinkCheckboxSwitch(linkCheckboxSwitch.querySelector('input').checked);
             updateImageCheckboxSwitch(imageCheckboxSwitch.querySelector('input').checked);
+            updateShowImageResolution(showImageResolution.querySelector('input').checked);
             updateMaxScrollCount(parseInt(scrollCount.querySelector('input').value) || 50)
             updateScriptServerURL(scriptServerURL.querySelector('.text-input').value.trim() || defaultsWebSocketURL);
             updateScriptServerSwitch(scriptServerSwitch.querySelector('input').checked);
             updateImageDownloadFormat(imageDownloadFormat.querySelector('select').value.trim() || "jpeg");
-            // updateFileNameFormat(nameFormat.querySelector('.text-input').value.trim() || null);
+            updateFileNameFormat(nameFormat.querySelector('.text-input').value.trim() || defaultFileNameFormat);
             closeSettingsModal();
         });
 
@@ -1536,6 +1654,24 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
         display: block;
     }
     .image-item.selected { border-color: #2196F3; }
+
+    .image-resolution {
+        position: absolute;
+        left: 6px;
+        bottom: 6px;
+        z-index: 2;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: rgba(0, 0, 0, 0.65);
+        color: #fff;
+        font-size: 11px;
+        line-height: 1.3;
+        pointer-events: none;
+        max-width: calc(100% - 12px);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
 
     .image-checkbox {
         position: absolute;
@@ -1634,6 +1770,15 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
                 item.appendChild(checkbox);
                 item.appendChild(label);
                 item.appendChild(img);
+
+                if (config.showImageResolution) {
+                    const badge = document.createElement('div');
+                    badge.className = 'image-resolution';
+                    const w = Number(image.width);
+                    const h = Number(image.height);
+                    badge.textContent = (w > 0 && h > 0) ? `${w}×${h}` : t.resolutionUnknown;
+                    item.appendChild(badge);
+                }
 
                 // 绑定点击事件
                 item.addEventListener('click', (e) => {
