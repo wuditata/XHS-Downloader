@@ -2,7 +2,7 @@
 // @name           XHS-Downloader
 // @namespace      xhs_downloader
 // @homepage       https://github.com/JoeanAmier/XHS-Downloader
-// @version        2.3.7
+// @version        2.3.6.1
 // @tag            小红书
 // @tag            RedNote
 // @tag            XiaoHongShu
