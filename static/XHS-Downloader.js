@@ -2,7 +2,7 @@
 // @name           XHS-Downloader
 // @namespace      xhs_downloader
 // @homepage       https://github.com/JoeanAmier/XHS-Downloader
-// @version        2.2.4
+// @version        2.2.5
 // @tag            小红书
 // @tag            RedNote
 // @description    提取小红书作品/用户链接，下载小红书无水印图文/视频作品文件
@@ -46,6 +46,7 @@
         keepMenuVisible: GM_getValue("keepMenuVisible", false),
         linkCheckboxSwitch: GM_getValue("linkCheckboxSwitch", true),
         imageCheckboxSwitch: GM_getValue("imageCheckboxSwitch", true), // imageDownloadFormat: GM_getValue("imageDownloadFormat", "JPG"),
+        showImageResolution: GM_getValue("showImageResolution", false),
         scriptServerURL: GM_getValue("scriptServerURL", defaultsWebSocketURL),
         scriptServerSwitch: GM_getValue("scriptServerSwitch", false),
         fileNameFormat: GM_getValue("fileNameFormat", defaultFileNameFormat),
@@ -168,6 +169,11 @@
         GM_setValue("imageCheckboxSwitch", config.imageCheckboxSwitch);
     }
 
+    const updateShowImageResolution = (value) => {
+        config.showImageResolution = value;
+        GM_setValue("showImageResolution", config.showImageResolution);
+    };
+
     const updateScriptServerURL = (value) => {
         config.scriptServerURL = value;
         GM_setValue("scriptServerURL", config.scriptServerURL);
@@ -262,7 +268,11 @@ KS-Downloader（快手、KuaiShou）：https://github.com/JoeanAmier/KS-Download
             for (const [index, item] of imageList.entries()) {
                 if (item.urlDefault) {
                     items.push({
-                                   webp: item.urlDefault, index: index + 1, url: urls[index],
+                                   webp: item.urlDefault,
+                                   index: index + 1,
+                                   url: urls[index],
+                                   width: item.width || item.infoList?.[0]?.width || null,
+                                   height: item.height || item.infoList?.[0]?.height || null,
                                })
                 } else {
                     console.error("提取图片预览链接失败", item)
@@ -1229,6 +1239,12 @@ KS-Downloader（快手、KuaiShou）：https://github.com/JoeanAmier/KS-Download
                                                          checked: GM_getValue("imageCheckboxSwitch", true),
                                                      });
 
+        const showImageResolution = createSwitchItem({
+                                                         label: '显示图片宽高',
+                                                         description: '启用后，选图弹窗显示作品声明的宽×高（非实文件探测）',
+                                                         checked: GM_getValue("showImageResolution", false),
+                                                     });
+
         const keepMenuVisible = createSwitchItem({
                                                      label: '菜单保持显示',
                                                      description: '启用后，功能菜单无需鼠标悬停始终保持显示',
@@ -1280,6 +1296,7 @@ KS-Downloader（快手、KuaiShou）：https://github.com/JoeanAmier/KS-Download
         body.appendChild(scrollCount);
         body.appendChild(linkCheckboxSwitch);
         body.appendChild(imageCheckboxSwitch);
+        body.appendChild(showImageResolution);
         // body.appendChild(imageDownloadFormat);
         body.appendChild(keepMenuVisible);
         body.appendChild(scriptServerURL);
@@ -1311,6 +1328,7 @@ KS-Downloader（快手、KuaiShou）：https://github.com/JoeanAmier/KS-Download
             updateKeepMenuVisible(keepMenuVisible.querySelector('input').checked);
             updateLinkCheckboxSwitch(linkCheckboxSwitch.querySelector('input').checked);
             updateImageCheckboxSwitch(imageCheckboxSwitch.querySelector('input').checked);
+            updateShowImageResolution(showImageResolution.querySelector('input').checked);
             updateMaxScrollCount(parseInt(scrollCount.querySelector('input').value) || 50)
             updateScriptServerURL(scriptServerURL.querySelector('.text-input').value.trim() || defaultsWebSocketURL);
             updateScriptServerSwitch(scriptServerSwitch.querySelector('input').checked);
@@ -1367,6 +1385,24 @@ KS-Downloader（快手、KuaiShou）：https://github.com/JoeanAmier/KS-Download
         display: block;
     }
     .image-item.selected { border-color: #2196F3; }
+
+    .image-resolution {
+        position: absolute;
+        left: 6px;
+        bottom: 6px;
+        z-index: 2;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: rgba(0, 0, 0, 0.65);
+        color: #fff;
+        font-size: 11px;
+        line-height: 1.3;
+        pointer-events: none;
+        max-width: calc(100% - 12px);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
 
     .image-checkbox {
         position: absolute;
@@ -1465,6 +1501,15 @@ KS-Downloader（快手、KuaiShou）：https://github.com/JoeanAmier/KS-Download
                 item.appendChild(checkbox);
                 item.appendChild(label);
                 item.appendChild(img);
+
+                if (config.showImageResolution) {
+                    const badge = document.createElement('div');
+                    badge.className = 'image-resolution';
+                    const w = Number(image.width);
+                    const h = Number(image.height);
+                    badge.textContent = (w > 0 && h > 0) ? `${w}×${h}` : '尺寸未知';
+                    item.appendChild(badge);
+                }
 
                 // 绑定点击事件
                 item.addEventListener('click', (e) => {
