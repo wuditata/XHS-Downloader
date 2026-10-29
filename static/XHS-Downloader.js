@@ -127,6 +127,9 @@ KS-Downloader（快手、KuaiShou）：https://github.com/JoeanAmier/KS-Download
             showImageResolutionDesc: '启用后，选图弹窗显示作品声明的宽×高（非实文件探测）',
             resolutionUnknown: '尺寸未知',
             imagePreviewTip: '点击查看原图',
+            viewerFitHeight: '适合高度',
+            viewerOriginalSize: '原始尺寸',
+            viewerOpenInNewWindow: '新窗口打开',
             keepMenuVisibleLabel: '菜单保持显示',
             keepMenuVisibleDesc: '启用后，功能菜单无需鼠标悬停始终保持显示',
             scriptServerURLLabel: 'WebSocket 服务器地址',
@@ -289,6 +292,9 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
             showImageResolutionDesc: 'When enabled, the image picker shows declared width×height (not probed from the file)',
             resolutionUnknown: 'Unknown size',
             imagePreviewTip: 'Click to preview full image',
+            viewerFitHeight: 'Fit height',
+            viewerOriginalSize: 'Original size',
+            viewerOpenInNewWindow: 'Open in new window',
             keepMenuVisibleLabel: 'Keep Menu Visible',
             keepMenuVisibleDesc: 'When enabled, the menu stays visible without needing a mouse hover',
             scriptServerURLLabel: 'WebSocket Server URL',
@@ -2298,27 +2304,87 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
         white-space: nowrap;
     }
 
-    /* 图片灯箱：点击分辨率角标查看原图 */
-    .image-lightbox {
+    /* 图片查看器：点击分辨率角标查看原图 */
+    .image-viewer {
         position: fixed;
         inset: 0;
         z-index: 10000;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: rgba(0, 0, 0, 0.85);
-        cursor: zoom-out;
+        background: rgba(0, 0, 0, 0.88);
     }
-    .image-lightbox img {
-        max-width: 94vw;
-        max-height: 94vh;
+    .image-viewer img {
+        display: block;
+        border-radius: 4px;
+    }
+    .image-viewer img.fit-height {
+        max-width: none;
+        max-height: 100vh;
+        width: auto;
+        height: auto;
+        cursor: zoom-in;
+    }
+    .image-viewer img.original-size {
+        max-width: none;
+        max-height: none;
+        cursor: move;
+    }
+    .image-viewer-toolbar {
+        position: absolute;
+        top: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 8px;
+        z-index: 2;
+    }
+    .image-viewer-toolbar button {
+        padding: 6px 14px;
+        border: none;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.18);
+        color: #fff;
+        font-size: 13px;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+    .image-viewer-toolbar button:hover {
+        background: rgba(255, 255, 255, 0.32);
+    }
+    .image-viewer-toolbar button.active {
+        background: #2196F3;
+    }
+    .image-viewer-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 44px;
+        height: 64px;
+        border: none;
         border-radius: 8px;
-        object-fit: contain;
+        background: rgba(255, 255, 255, 0.14);
+        color: #fff;
+        font-size: 26px;
+        cursor: pointer;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
-    .image-lightbox-caption {
+    .image-viewer-nav:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+    .image-viewer-nav.prev { left: 20px; }
+    .image-viewer-nav.next { right: 20px; }
+    .image-viewer-nav:disabled {
+        opacity: 0.25;
+        cursor: default;
+    }
+    .image-viewer-caption {
         position: absolute;
         left: 50%;
-        bottom: 24px;
+        bottom: 20px;
         transform: translateX(-50%);
         padding: 4px 12px;
         border-radius: 6px;
@@ -2326,6 +2392,7 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
         color: #fff;
         font-size: 12px;
         pointer-events: none;
+        white-space: nowrap;
     }
 
     .image-checkbox {
@@ -2373,28 +2440,139 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
     };
 
     /* ==================== 弹窗逻辑 ==================== */
-    // 灯箱查看原图，点击任意处关闭。
-    const showImageLightbox = (url, caption) => {
-        if (document.getElementById('imageLightbox')) {
+    // 图片查看器：适合高度/原始尺寸切换、上一下一张、新窗口打开。
+    const showImageViewer = (images, startIndex = 0) => {
+        if (document.getElementById('imageViewer')) {
             return;
         }
-        const lightbox = document.createElement('div');
-        lightbox.id = 'imageLightbox';
-        lightbox.className = 'image-lightbox';
+        let index = Math.min(Math.max(startIndex, 0), images.length - 1);
+        let fitHeight = true;
+
+        const viewer = document.createElement('div');
+        viewer.id = 'imageViewer';
+        viewer.className = 'image-viewer';
 
         const img = document.createElement('img');
-        img.src = url;
-        img.alt = caption || '';
 
-        lightbox.appendChild(img);
-        if (caption) {
-            const label = document.createElement('div');
-            label.className = 'image-lightbox-caption';
-            label.textContent = caption;
-            lightbox.appendChild(label);
+        const toolbar = document.createElement('div');
+        toolbar.className = 'image-viewer-toolbar';
+
+        const fitBtn = document.createElement('button');
+        fitBtn.textContent = t.viewerFitHeight;
+
+        const originalBtn = document.createElement('button');
+        originalBtn.textContent = t.viewerOriginalSize;
+
+        const openBtn = document.createElement('button');
+        openBtn.textContent = t.viewerOpenInNewWindow;
+
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = t.closeButton;
+
+        toolbar.appendChild(fitBtn);
+        toolbar.appendChild(originalBtn);
+        toolbar.appendChild(openBtn);
+        toolbar.appendChild(closeBtn);
+
+        const prevBtn = document.createElement('button');
+        prevBtn.className = 'image-viewer-nav prev';
+        prevBtn.textContent = '‹';
+
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'image-viewer-nav next';
+        nextBtn.textContent = '›';
+
+        const caption = document.createElement('div');
+        caption.className = 'image-viewer-caption';
+
+        const render = () => {
+            const image = images[index];
+            img.src = image.url;
+            img.className = fitHeight ? 'fit-height' : 'original-size';
+            if (!fitHeight) {
+                img.style.width = `${img.naturalWidth || image.width || ''}px`;
+                img.style.height = '';
+            } else {
+                img.style.width = '';
+                img.style.height = '';
+            }
+            fitBtn.classList.toggle('active', fitHeight);
+            originalBtn.classList.toggle('active', !fitHeight);
+            const parts = [`${index + 1}/${images.length}`];
+            if (image.caption) {
+                parts.push(image.caption);
+            }
+            caption.textContent = parts.join(' · ');
+            prevBtn.disabled = index === 0;
+            nextBtn.disabled = index === images.length - 1;
+        };
+
+        const close = () => {
+            document.removeEventListener('keydown', onKeyDown);
+            viewer.remove();
+        };
+
+        const show = (step) => {
+            const next = index + step;
+            if (next < 0 || next >= images.length) {
+                return;
+            }
+            index = next;
+            render();
+        };
+
+        const onKeyDown = (event) => {
+            if (event.key === 'Escape') {
+                close();
+            } else if (event.key === 'ArrowLeft') {
+                show(-1);
+            } else if (event.key === 'ArrowRight') {
+                show(1);
+            }
+        };
+
+        fitBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fitHeight = true;
+            render();
+        });
+        originalBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fitHeight = false;
+            render();
+        });
+        openBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            window.open(images[index].url, '_blank');
+        });
+        closeBtn.addEventListener('click', close);
+        prevBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            show(-1);
+        });
+        nextBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            show(1);
+        });
+        img.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (fitHeight) {
+                fitHeight = false;
+                render();
+            }
+        });
+        viewer.addEventListener('click', close);
+        document.addEventListener('keydown', onKeyDown);
+
+        viewer.appendChild(img);
+        viewer.appendChild(toolbar);
+        if (images.length > 1) {
+            viewer.appendChild(prevBtn);
+            viewer.appendChild(nextBtn);
         }
-        lightbox.addEventListener('click', () => lightbox.remove());
-        document.body.appendChild(lightbox);
+        viewer.appendChild(caption);
+        document.body.appendChild(viewer);
+        render();
     };
 
     const showImageSelectionModal = (imageUrls, name, server = false,) => {
@@ -2427,7 +2605,7 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
             imageGrid.className = 'image-grid';
 
             // 动态生成图片项
-            imageUrls.forEach((image) => {
+            imageUrls.forEach((image, imageIndex) => {
                 const item = document.createElement('div');
                 item.className = 'image-item';
 
@@ -2456,12 +2634,17 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
                     const w = Number(image.width);
                     const h = Number(image.height);
                     badge.textContent = (w > 0 && h > 0) ? `${w}×${h}` : t.resolutionUnknown;
+                    image.caption = badge.textContent;
                     badge.title = t.imagePreviewTip;
                     badge.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        showImageLightbox(image.url, badge.textContent);
+                        showImageViewer(imageUrls, imageIndex);
                     });
                     item.appendChild(badge);
+                } else {
+                    const w = Number(image.width);
+                    const h = Number(image.height);
+                    image.caption = (w > 0 && h > 0) ? `${w}×${h}` : '';
                 }
 
                 // 绑定点击事件
