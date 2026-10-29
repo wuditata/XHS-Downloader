@@ -2465,14 +2465,25 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
     };
 
     // 滚动穿透拦截：内容区可继续滚动时放行，到边界或不在滚动区内则阻止页面滚动。
+    // Shift+滚轮是横向滚动（Chrome 保持 deltaY、由默认行为转为水平），需单独按水平边界判断。
     const attachScrollTrap = (container, scrollerSelector) => {
         container.addEventListener('wheel', (e) => {
             const scroller = e.target.closest(scrollerSelector);
             if (scroller) {
-                const atTop = scroller.scrollTop <= 0;
-                const atBottom = scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 1;
-                if ((e.deltaY < 0 && !atTop) || (e.deltaY > 0 && !atBottom)) {
-                    return;
+                const horizontal = e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY);
+                if (horizontal) {
+                    const delta = e.deltaX || e.deltaY;
+                    const atLeft = scroller.scrollLeft <= 0;
+                    const atRight = scroller.scrollLeft + scroller.clientWidth >= scroller.scrollWidth - 1;
+                    if ((delta < 0 && !atLeft) || (delta > 0 && !atRight)) {
+                        return;
+                    }
+                } else {
+                    const atTop = scroller.scrollTop <= 0;
+                    const atBottom = scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 1;
+                    if ((e.deltaY < 0 && !atTop) || (e.deltaY > 0 && !atBottom)) {
+                        return;
+                    }
                 }
             }
             e.preventDefault();
