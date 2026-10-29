@@ -126,6 +126,7 @@ KS-Downloader（快手、KuaiShou）：https://github.com/JoeanAmier/KS-Download
             showImageResolutionLabel: '显示图片宽高',
             showImageResolutionDesc: '启用后，选图弹窗显示作品声明的宽×高（非实文件探测）',
             resolutionUnknown: '尺寸未知',
+            imagePreviewTip: '点击查看原图',
             keepMenuVisibleLabel: '菜单保持显示',
             keepMenuVisibleDesc: '启用后，功能菜单无需鼠标悬停始终保持显示',
             scriptServerURLLabel: 'WebSocket 服务器地址',
@@ -287,6 +288,7 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
             showImageResolutionLabel: 'Show Image Resolution',
             showImageResolutionDesc: 'When enabled, the image picker shows declared width×height (not probed from the file)',
             resolutionUnknown: 'Unknown size',
+            imagePreviewTip: 'Click to preview full image',
             keepMenuVisibleLabel: 'Keep Menu Visible',
             keepMenuVisibleDesc: 'When enabled, the menu stays visible without needing a mouse hover',
             scriptServerURLLabel: 'WebSocket Server URL',
@@ -2288,11 +2290,42 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
         color: #fff;
         font-size: 11px;
         line-height: 1.3;
-        pointer-events: none;
+        pointer-events: auto;
+        cursor: zoom-in;
         max-width: calc(100% - 12px);
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+    }
+
+    /* 图片灯箱：点击分辨率角标查看原图 */
+    .image-lightbox {
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.85);
+        cursor: zoom-out;
+    }
+    .image-lightbox img {
+        max-width: 94vw;
+        max-height: 94vh;
+        border-radius: 8px;
+        object-fit: contain;
+    }
+    .image-lightbox-caption {
+        position: absolute;
+        left: 50%;
+        bottom: 24px;
+        transform: translateX(-50%);
+        padding: 4px 12px;
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.65);
+        color: #fff;
+        font-size: 12px;
+        pointer-events: none;
     }
 
     .image-checkbox {
@@ -2340,6 +2373,30 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
     };
 
     /* ==================== 弹窗逻辑 ==================== */
+    // 灯箱查看原图，点击任意处关闭。
+    const showImageLightbox = (url, caption) => {
+        if (document.getElementById('imageLightbox')) {
+            return;
+        }
+        const lightbox = document.createElement('div');
+        lightbox.id = 'imageLightbox';
+        lightbox.className = 'image-lightbox';
+
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = caption || '';
+
+        lightbox.appendChild(img);
+        if (caption) {
+            const label = document.createElement('div');
+            label.className = 'image-lightbox-caption';
+            label.textContent = caption;
+            lightbox.appendChild(label);
+        }
+        lightbox.addEventListener('click', () => lightbox.remove());
+        document.body.appendChild(lightbox);
+    };
+
     const showImageSelectionModal = (imageUrls, name, server = false,) => {
         return new Promise((resolve,) => {
             if (document.getElementById('imageSelectionOverlay')) {
@@ -2399,6 +2456,11 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
                     const w = Number(image.width);
                     const h = Number(image.height);
                     badge.textContent = (w > 0 && h > 0) ? `${w}×${h}` : t.resolutionUnknown;
+                    badge.title = t.imagePreviewTip;
+                    badge.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        showImageLightbox(image.url, badge.textContent);
+                    });
                     item.appendChild(badge);
                 }
 
