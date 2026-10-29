@@ -2,7 +2,7 @@
 // @name           XHS-Downloader
 // @namespace      xhs_downloader
 // @homepage       https://github.com/JoeanAmier/XHS-Downloader
-// @version        2.4.4.1
+// @version        2.4.4.2
 // @tag            小红书
 // @tag            RedNote
 // @tag            XiaoHongShu
@@ -123,6 +123,8 @@ KS-Downloader（快手、KuaiShou）：https://github.com/JoeanAmier/KS-Download
             linkCheckboxSwitchDesc: '关闭后，提取作品链接时无需确认直接提取全部链接',
             imageCheckboxSwitchLabel: '图片下载选择模式',
             imageCheckboxSwitchDesc: '关闭后，下载图文作品时无需确认直接下载全部文件',
+            singleImageSelectionLabel: '单图作品选择模式',
+            singleImageSelectionDesc: '启用后，单图作品也弹窗确认（可预览与取消）；关闭则单图直接下载',
             showImageResolutionLabel: '显示图片宽高',
             showImageResolutionDesc: '启用后，选图弹窗显示作品声明的宽×高（非实文件探测）',
             resolutionUnknown: '尺寸未知',
@@ -287,6 +289,8 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
             linkCheckboxSwitchDesc: 'If disabled, all links will be extracted immediately without confirmation',
             imageCheckboxSwitchLabel: 'Image Download Selection Mode',
             imageCheckboxSwitchDesc: 'If disabled, all images will be downloaded immediately without confirmation',
+            singleImageSelectionLabel: 'Single Image Selection Mode',
+            singleImageSelectionDesc: 'When enabled, single-image works also show the selection modal; when disabled, they download directly',
             showImageResolutionLabel: 'Show Image Resolution',
             showImageResolutionDesc: 'When enabled, the image picker shows declared width×height (not probed from the file)',
             resolutionUnknown: 'Unknown size',
@@ -435,6 +439,7 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
         keepMenuVisible: GM_getValue("keepMenuVisible", false),
         linkCheckboxSwitch: GM_getValue("linkCheckboxSwitch", true),
         imageCheckboxSwitch: GM_getValue("imageCheckboxSwitch", true),
+        singleImageSelection: GM_getValue("singleImageSelection", true),
         showImageResolution: GM_getValue("showImageResolution", false),
         imageDownloadFormat: GM_getValue("imageDownloadFormat", "jpeg"),
         scriptServerURL: GM_getValue("scriptServerURL", defaultsWebSocketURL),
@@ -556,6 +561,11 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
     const updateImageCheckboxSwitch = (value) => {
         config.imageCheckboxSwitch = value;
         GM_setValue("imageCheckboxSwitch", config.imageCheckboxSwitch);
+    }
+
+    const updateSingleImageSelection = (value) => {
+        config.singleImageSelection = value;
+        GM_setValue("singleImageSelection", config.singleImageSelection);
     }
 
     const updateShowImageResolution = (value) => {
@@ -698,6 +708,10 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
         }
     };
 
+    // 是否弹选图窗：选择模式开启时，多图必弹，单图取决于开关。
+    const shouldShowImageSelection = (fileCount) =>
+        config.imageCheckboxSwitch && (fileCount > 1 || config.singleImageSelection);
+
     const download = async (urls, note, server = false,) => {
         const name = extractName(note);
         if (server) {
@@ -708,8 +722,11 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
                     console.error("解析图文作品数据失败", note)
                     abnormal(t.imageExtractError)
                     return;
-                } else if (urls.length > 1 && config.imageCheckboxSwitch) {
+                } else if (shouldShowImageSelection(urls.length)) {
                     data.index = await showImageSelectionModal(items, name, server,);
+                    if (data.index === null) {
+                        return;
+                    }
                 }
             }
             data.auth_token = config.scriptAuthToken;
@@ -724,7 +741,7 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
                 if (items.length === 0) {
                     console.error("解析图文作品数据失败", note)
                     abnormal(t.imageExtractError)
-                } else if (urls.length > 1 && config.imageCheckboxSwitch) {
+                } else if (shouldShowImageSelection(urls.length)) {
                     await showImageSelectionModal(items, name,);
                 } else {
                     showToast(t.downloadTips);
@@ -2088,6 +2105,12 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
                                                          checked: GM_getValue("imageCheckboxSwitch", true),
                                                      });
 
+        const singleImageSelection = createSwitchItem({
+                                                          label: t.singleImageSelectionLabel,
+                                                          description: t.singleImageSelectionDesc,
+                                                          checked: GM_getValue("singleImageSelection", true),
+                                                      });
+
         const showImageResolution = createSwitchItem({
                                                          label: t.showImageResolutionLabel,
                                                          description: t.showImageResolutionDesc,
@@ -2165,7 +2188,7 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
         // 组合内容
         const downloadSettings = createSettingsGroup(
             t.downloadSettingsGroup,
-            [filePack, imageCheckboxSwitch, imageDownloadFormat, nameFormat, showImageResolution],
+            [filePack, imageCheckboxSwitch, singleImageSelection, imageDownloadFormat, nameFormat, showImageResolution],
             true
         );
         const extractSettings = createSettingsGroup(
@@ -2221,6 +2244,7 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
             updateKeepMenuVisible(keepMenuVisible.querySelector('input').checked);
             updateLinkCheckboxSwitch(linkCheckboxSwitch.querySelector('input').checked);
             updateImageCheckboxSwitch(imageCheckboxSwitch.querySelector('input').checked);
+            updateSingleImageSelection(singleImageSelection.querySelector('input').checked);
             updateShowImageResolution(showImageResolution.querySelector('input').checked);
             updateMaxScrollCount(parseInt(scrollCount.querySelector('input').value) || 50)
             updateScriptServerURL(scriptServerURL.querySelector('.text-input').value.trim() || defaultsWebSocketURL);
