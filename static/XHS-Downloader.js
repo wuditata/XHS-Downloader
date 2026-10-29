@@ -2584,6 +2584,7 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
     const showImageSelectionModal = (imageUrls, name, server = false,) => {
         return new Promise((resolve,) => {
             if (document.getElementById('imageSelectionOverlay')) {
+                resolve(null);
                 return;
             }
 
@@ -2704,6 +2705,19 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
             overlay.appendChild(modal);
             document.body.appendChild(overlay);
 
+            // 统一关闭入口：清理 ESC 监听并结束挂起的 Promise，
+            // 避免上层 await 永久挂起导致下载防重标记泄漏。
+            let settled = false;
+            const settle = () => {
+                if (settled) {
+                    return;
+                }
+                settled = true;
+                document.removeEventListener('keydown', onEscapeKey, true);
+                closeImagesModal();
+                resolve(null);
+            };
+
             // 确认事件
             confirmBtn.addEventListener('click', async () => {
                 const selectedImages = Array.from(document.querySelectorAll('.image-checkbox:checked'))
@@ -2717,6 +2731,8 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
                     showToast(t.imageSelectionTip);
                     return;
                 }
+                settled = true;
+                document.removeEventListener('keydown', onEscapeKey, true);
                 closeImagesModal();
                 if (server) {
                     resolve(selectedImages.map(item => item.index));
@@ -2727,8 +2743,22 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
             });
 
             // 关闭事件
-            closeBtn.addEventListener('click', closeImagesModal);
-            overlay.addEventListener('click', (e) => e.target === overlay && closeImagesModal());
+            closeBtn.addEventListener('click', settle);
+            overlay.addEventListener('click', (e) => e.target === overlay && settle());
+
+            // ESC 关闭最顶层弹窗，并阻止事件传给页面。
+            const onEscapeKey = (e) => {
+                if (e.key !== 'Escape') {
+                    return;
+                }
+                if (document.getElementById('imageViewer')) {
+                    return;
+                }
+                e.stopPropagation();
+                e.preventDefault();
+                settle();
+            };
+            document.addEventListener('keydown', onEscapeKey, true);
 
             const setAllChecked = (checked) => {
                 const items = imageGrid.querySelectorAll('.image-item');
