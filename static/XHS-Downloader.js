@@ -127,8 +127,9 @@ KS-Downloader（快手、KuaiShou）：https://github.com/JoeanAmier/KS-Download
             showImageResolutionDesc: '启用后，选图弹窗显示作品声明的宽×高（非实文件探测）',
             resolutionUnknown: '尺寸未知',
             imagePreviewTip: '点击查看原图',
-            viewerFitHeight: '适合高度',
-            viewerOriginalSize: '原始尺寸',
+            viewerBrowseText: '浏览',
+            viewerFitHeight: '自适应',
+            viewerOriginalSize: '100%',
             viewerOpenInNewWindow: '新窗口打开',
             keepMenuVisibleLabel: '菜单保持显示',
             keepMenuVisibleDesc: '启用后，功能菜单无需鼠标悬停始终保持显示',
@@ -292,8 +293,9 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
             showImageResolutionDesc: 'When enabled, the image picker shows declared width×height (not probed from the file)',
             resolutionUnknown: 'Unknown size',
             imagePreviewTip: 'Click to preview full image',
-            viewerFitHeight: 'Fit height',
-            viewerOriginalSize: 'Original size',
+            viewerBrowseText: 'Browse',
+            viewerFitHeight: 'Fit',
+            viewerOriginalSize: '100%',
             viewerOpenInNewWindow: 'Open in new window',
             keepMenuVisibleLabel: 'Keep Menu Visible',
             keepMenuVisibleDesc: 'When enabled, the menu stays visible without needing a mouse hover',
@@ -2309,17 +2311,21 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
         position: fixed;
         inset: 0;
         z-index: 10000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         background: rgba(0, 0, 0, 0.88);
+    }
+    .image-viewer-scroll {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        overflow: auto;
     }
     .image-viewer img {
         display: block;
+        margin: auto;
         border-radius: 4px;
     }
     .image-viewer img.fit-height {
-        max-width: none;
+        max-width: 100vw;
         max-height: 100vh;
         width: auto;
         height: auto;
@@ -2354,6 +2360,30 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
     }
     .image-viewer-toolbar button.active {
         background: #2196F3;
+    }
+    .image-viewer-actions {
+        position: absolute;
+        top: 16px;
+        right: 20px;
+        display: flex;
+        gap: 8px;
+        z-index: 2;
+    }
+    .image-viewer-actions button {
+        width: 36px;
+        height: 36px;
+        border: none;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.18);
+        color: #fff;
+        font-size: 16px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .image-viewer-actions button:hover {
+        background: rgba(255, 255, 255, 0.32);
     }
     .image-viewer-nav {
         position: absolute;
@@ -2440,7 +2470,7 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
     };
 
     /* ==================== 弹窗逻辑 ==================== */
-    // 图片查看器：适合高度/原始尺寸切换、上一下一张、新窗口打开。
+    // 图片查看器：自适应/100% 切换、上一下一张、新窗口打开。
     const showImageViewer = (images, startIndex = 0) => {
         if (document.getElementById('imageViewer')) {
             return;
@@ -2451,6 +2481,9 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
         const viewer = document.createElement('div');
         viewer.id = 'imageViewer';
         viewer.className = 'image-viewer';
+
+        const scroll = document.createElement('div');
+        scroll.className = 'image-viewer-scroll';
 
         const img = document.createElement('img');
 
@@ -2463,16 +2496,22 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
         const originalBtn = document.createElement('button');
         originalBtn.textContent = t.viewerOriginalSize;
 
-        const openBtn = document.createElement('button');
-        openBtn.textContent = t.viewerOpenInNewWindow;
-
-        const closeBtn = document.createElement('button');
-        closeBtn.textContent = t.closeButton;
-
         toolbar.appendChild(fitBtn);
         toolbar.appendChild(originalBtn);
-        toolbar.appendChild(openBtn);
-        toolbar.appendChild(closeBtn);
+
+        const actions = document.createElement('div');
+        actions.className = 'image-viewer-actions';
+
+        const openBtn = document.createElement('button');
+        openBtn.textContent = '⧉';
+        openBtn.title = t.viewerOpenInNewWindow;
+
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = '✕';
+        closeBtn.title = t.closeButton;
+
+        actions.appendChild(openBtn);
+        actions.appendChild(closeBtn);
 
         const prevBtn = document.createElement('button');
         prevBtn.className = 'image-viewer-nav prev';
@@ -2489,11 +2528,11 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
             const image = images[index];
             img.src = image.url;
             img.className = fitHeight ? 'fit-height' : 'original-size';
-            if (!fitHeight) {
-                img.style.width = `${img.naturalWidth || image.width || ''}px`;
+            if (fitHeight) {
+                img.style.width = '';
                 img.style.height = '';
             } else {
-                img.style.width = '';
+                img.style.width = `${img.naturalWidth || image.width || ''}px`;
                 img.style.height = '';
             }
             fitBtn.classList.toggle('active', fitHeight);
@@ -2519,6 +2558,7 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
             }
             index = next;
             render();
+            scroll.scrollTop = 0;
         };
 
         const onKeyDown = (event) => {
@@ -2561,11 +2601,17 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
                 render();
             }
         });
-        viewer.addEventListener('click', close);
+        viewer.addEventListener('click', (e) => {
+            if (e.target === viewer || e.target === scroll) {
+                close();
+            }
+        });
         document.addEventListener('keydown', onKeyDown);
 
-        viewer.appendChild(img);
+        scroll.appendChild(img);
+        viewer.appendChild(scroll);
         viewer.appendChild(toolbar);
+        viewer.appendChild(actions);
         if (images.length > 1) {
             viewer.appendChild(prevBtn);
             viewer.appendChild(nextBtn);
@@ -2664,6 +2710,11 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
             const footer = document.createElement('div');
             footer.className = 'modal-footer';
             // 新增：全选 / 全不选
+            const browseBtn = document.createElement('button');
+            browseBtn.className = 'secondary-btn';
+            browseBtn.textContent = t.viewerBrowseText;
+            browseBtn.addEventListener('click', () => showImageViewer(imageUrls, 0));
+
             const selectAllBtn = document.createElement('button');
             selectAllBtn.className = 'secondary-btn';
             selectAllBtn.textContent = t.selectAllButton;
@@ -2680,6 +2731,7 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
             closeBtn.className = 'secondary-btn';
             closeBtn.textContent = t.closeDownloadButton;
 
+            footer.appendChild(browseBtn);
             footer.appendChild(selectAllBtn);
             footer.appendChild(selectNoneBtn);
             footer.appendChild(confirmBtn);
