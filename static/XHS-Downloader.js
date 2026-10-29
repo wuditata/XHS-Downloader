@@ -2440,6 +2440,21 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
         }
     };
 
+    // 滚动穿透拦截：内容区可继续滚动时放行，到边界或不在滚动区内则阻止页面滚动。
+    const attachScrollTrap = (container, scrollerSelector) => {
+        container.addEventListener('wheel', (e) => {
+            const scroller = e.target.closest(scrollerSelector);
+            if (scroller) {
+                const atTop = scroller.scrollTop <= 0;
+                const atBottom = scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 1;
+                if ((e.deltaY < 0 && !atTop) || (e.deltaY > 0 && !atBottom)) {
+                    return;
+                }
+            }
+            e.preventDefault();
+        }, {passive: false});
+    };
+
     /* ==================== 弹窗逻辑 ==================== */
     // 图片查看器：点击图片在自适应/100% 间切换，放大时以点击点为焦点。
     const showImageViewer = (images, startIndex = 0) => {
@@ -2520,7 +2535,8 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
         };
 
         const close = () => {
-            document.removeEventListener('keydown', onKeyDown);
+            window.removeEventListener('keydown', onKeyDown, true);
+            window.removeEventListener('keyup', onKeyUp, true);
             viewer.remove();
         };
 
@@ -2535,15 +2551,28 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
             scroll.scrollLeft = 0;
         };
 
+        // 捕获阶段拦截按键，避免页面快捷键与 ESC 关闭底层窗口。
         const onKeyDown = (event) => {
             if (event.key === 'Escape') {
+                event.stopPropagation();
+                event.preventDefault();
                 close();
             } else if (event.key === 'ArrowLeft') {
+                event.stopPropagation();
                 show(-1);
             } else if (event.key === 'ArrowRight') {
+                event.stopPropagation();
                 show(1);
             }
         };
+        const onKeyUp = (event) => {
+            if (event.key === 'Escape' || event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+                event.stopPropagation();
+                event.preventDefault();
+            }
+        };
+        window.addEventListener('keydown', onKeyDown, true);
+        window.addEventListener('keyup', onKeyUp, true);
 
         openBtn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -2567,7 +2596,6 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
                 close();
             }
         });
-        document.addEventListener('keydown', onKeyDown);
 
         scroll.appendChild(img);
         viewer.appendChild(scroll);
@@ -2578,6 +2606,7 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
         }
         viewer.appendChild(caption);
         document.body.appendChild(viewer);
+        attachScrollTrap(scroll, '.image-viewer-scroll');
         render();
     };
 
@@ -2704,16 +2733,21 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
             modal.appendChild(footer);
             overlay.appendChild(modal);
             document.body.appendChild(overlay);
+            attachScrollTrap(overlay, '.scrollable-modal-body');
 
-            // 统一关闭入口：清理 ESC 监听并结束挂起的 Promise，
+            // 统一关闭入口：清理按键监听并结束挂起的 Promise，
             // 避免上层 await 永久挂起导致下载防重标记泄漏。
             let settled = false;
+            const detachKeyGuards = () => {
+                window.removeEventListener('keydown', onKeyDown, true);
+                window.removeEventListener('keyup', onKeyUp, true);
+            };
             const settle = () => {
                 if (settled) {
                     return;
                 }
                 settled = true;
-                document.removeEventListener('keydown', onEscapeKey, true);
+                detachKeyGuards();
                 closeImagesModal();
                 resolve(null);
             };
@@ -2732,7 +2766,7 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
                     return;
                 }
                 settled = true;
-                document.removeEventListener('keydown', onEscapeKey, true);
+                detachKeyGuards();
                 closeImagesModal();
                 if (server) {
                     resolve(selectedImages.map(item => item.index));
@@ -2746,19 +2780,26 @@ Discord Community: https://discord.com/invite/ZYtmgKud9Y
             closeBtn.addEventListener('click', settle);
             overlay.addEventListener('click', (e) => e.target === overlay && settle());
 
-            // ESC 关闭最顶层弹窗，并阻止事件传给页面。
-            const onEscapeKey = (e) => {
-                if (e.key !== 'Escape') {
-                    return;
-                }
-                if (document.getElementById('imageViewer')) {
+            // ESC 只关闭最顶层弹窗并拦截按键，避免页面同时响应。
+            // keydown 与 keyup 都拦，防止小红书在 keyup 上关闭帖子窗口。
+            const topModalIsSelf = () => !document.getElementById('imageViewer');
+            const onKeyDown = (e) => {
+                if (e.key !== 'Escape' || !topModalIsSelf()) {
                     return;
                 }
                 e.stopPropagation();
                 e.preventDefault();
                 settle();
             };
-            document.addEventListener('keydown', onEscapeKey, true);
+            const onKeyUp = (e) => {
+                if (e.key !== 'Escape' || !topModalIsSelf()) {
+                    return;
+                }
+                e.stopPropagation();
+                e.preventDefault();
+            };
+            window.addEventListener('keydown', onKeyDown, true);
+            window.addEventListener('keyup', onKeyUp, true);
 
             const setAllChecked = (checked) => {
                 const items = imageGrid.querySelectorAll('.image-item');
